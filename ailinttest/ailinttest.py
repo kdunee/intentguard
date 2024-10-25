@@ -5,39 +5,39 @@ from collections import Counter
 
 from litellm import completion
 
-from llm_static_assert.llm_static_assert_options import LLMStaticAssertOptions
-from llm_static_assert.prompts import system_prompt, reponse_schema
+from ailinttest.ailinttest_options import AILintTestOptions
+from ailinttest.prompts import system_prompt, reponse_schema
 
 
-class LLMStaticAssert:
+class AILintTest:
     """
-    A class for performing static assertions using Language Models (LLMs).
+    A class for performing code assertions using Language Models (LLMs).
 
-    This class allows for the evaluation of expectations against provided objects
+    This class allows for the evaluation of expectations against provided code objects
     using LLM-based inference. It supports multiple inferences to achieve a quorum
     and provides customizable options for the assertion process.
     """
 
-    def __init__(self, options: LLMStaticAssertOptions = None):
+    def __init__(self, options: AILintTestOptions = None):
         """
-        Initialize the LLMStaticAssert instance.
+        Initialize the AILintTest instance.
 
         Args:
-            options (LLMStaticAssertOptions, optional): Configuration options for the static assert.
+            options (AILintTestOptions, optional): Configuration options for the assert.
                 If not provided, default options will be used.
         """
         if options is None:
-            options = LLMStaticAssertOptions()
+            options = AILintTestOptions()
         self.options = options
 
-    def static_assert(
+    def assert_code(
         self,
         expectation: str,
         params: Dict[str, object],
-        options: LLMStaticAssertOptions = None,
+        options: AILintTestOptions = None,
     ):
         """
-        Perform a static assertion using LLM inference.
+        Perform an assertion using LLM inference.
 
         This method evaluates the given expectation against the provided parameters
         using LLM-based inference. It performs multiple inferences based on the
@@ -46,7 +46,7 @@ class LLMStaticAssert:
         Args:
             expectation (str): The condition to be evaluated.
             params (Dict[str, object]): A dictionary of objects to be used in the evaluation.
-            options (LLMStaticAssertOptions, optional): Custom options for this specific assertion.
+            options (AILintTestOptions, optional): Custom options for this specific assertion.
                 If not provided, the instance's default options will be used.
 
         Raises:
@@ -115,9 +115,7 @@ class LLMStaticAssert:
 "{expectation}"
 """
 
-    def _send_completion_request(
-        self, prompt: str, options: LLMStaticAssertOptions
-    ) -> bool:
+    def _send_completion_request(self, prompt: str, options: AILintTestOptions) -> bool:
         """
         Send a completion request to the LLM and process the response.
 
@@ -126,7 +124,7 @@ class LLMStaticAssert:
 
         Args:
             prompt (str): The prepared prompt for the LLM.
-            options (LLMStaticAssertOptions): The options for the LLM request.
+            options (AILintTestOptions): The options for the LLM request.
 
         Returns:
             bool: The boolean result of the LLM inference.

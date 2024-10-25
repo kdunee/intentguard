@@ -1,98 +1,126 @@
-# LLM Static Assert
+# AILintTest
 
-LLM Static Assert is a powerful Python library that leverages Language Models (LLMs) to perform static assertions on code. This innovative approach combines the flexibility of natural language with the rigor of static analysis, offering a unique solution for code quality and correctness verification.
+AILintTest is a Python testing library that uses Large Language Models to verify code properties through natural language assertions. It seamlessly integrates with popular testing frameworks like pytest and unittest, allowing developers to express complex code expectations in plain English while maintaining the structure of traditional test suites.
 
-## Why LLM Static Assert?
+## Why AILintTest?
 
-Traditional static analysis tools often struggle with complex, context-dependent code properties. LLM Static Assert bridges this gap by utilizing the advanced reasoning capabilities of large language models to evaluate code against natural language expectations.
+Traditional testing approaches often require extensive boilerplate code to verify complex properties. AILintTest bridges this gap by allowing developers to express sophisticated test cases in natural language, particularly useful for scenarios where writing conventional test code would be impractical or time-consuming.
 
-### Benefits
+### Key Features
 
-1. **Natural Language Assertions**: Express complex code properties and expectations using plain English, making it easier to write and understand assertions.
-2. **Flexibility**: Evaluate a wide range of code properties that might be challenging for traditional static analysis tools.
-3. **Context-Aware**: LLMs can consider broader context and nuanced relationships within the code.
-4. **Customizable**: Adjust the assertion process with options like quorum size and model selection.
+1. **Natural Language Test Cases**: Write test assertions in plain English
+2. **Framework Integration**: Works with pytest, unittest, and other testing frameworks
+3. **Deterministic Results**: Uses voting mechanism and controlled sampling for consistent results
+4. **Flexible Verification**: Test complex code properties that would be difficult to verify traditionally
 
-### Drawbacks
+## When to Use AILintTest
 
-1. **Computational Overhead**: LLM inference can be more resource-intensive than traditional static analysis.
-2. **Potential for Ambiguity**: Natural language assertions may sometimes lead to ambiguous interpretations.
-3. **Dependence on LLM Quality**: The effectiveness of assertions relies on the capabilities of the underlying language model.
+AILintTest is designed for scenarios where traditional test implementation would be impractical or require excessive code. For example:
 
-## When to Use LLM Static Assert
+```python
+# Traditional approach would require:
+# 1. Iterating through all methods
+# 2. Parsing AST for each method
+# 3. Checking exception handling patterns
+# 4. Verifying logging calls
+# 5. Maintaining complex test code
 
-- When you need to verify complex, context-dependent code properties.
-- For catching subtle logical errors that might escape traditional static analysis.
-- In projects where code correctness is critical, and you want an additional layer of verification.
-- When you want to express code expectations in a more natural, readable format.
+# With AILintTest:
+def test_error_handling():
+    ailint.assert_code(
+        "All methods in {module} should use the custom ErrorHandler class for exception management, and log errors before re-raising them",
+        {"module": my_critical_module}
+    )
 
-## When Not to Use LLM Static Assert
+# Another example - checking documentation consistency
+def test_docstring_completeness():
+    ailint.assert_code(
+        "All public methods in {module} should have docstrings that include Parameters, Returns, and Examples sections",
+        {"module": my_api_module}
+    )
+```
 
-- For simple, straightforward assertions that can be easily handled by traditional unit tests or type checkers.
-- In environments where computational resources are severely constrained.
-- When you need deterministic, 100% reproducible results (due to the potential variability in LLM outputs).
+## How It Works
+
+### Deterministic Testing
+
+AILintTest employs several mechanisms to ensure consistent and reliable results:
+
+1. **Voting Mechanism**: Each assertion is evaluated multiple times (configurable through `quorum_size`), and the majority result is used
+2. **Temperature Control**: Uses low temperature for LLM sampling to reduce randomness
+3. **Structured Prompts**: Converts natural language assertions into structured prompts for consistent LLM interpretation
+
+```python
+# Configure determinism settings
+options = AILintTestOptions(
+    quorum_size=5,          # Number of evaluations per assertion
+)
+```
 
 ## Installation
 
-You can install LLM Static Assert using pip:
-
 ```bash
-pip install llm-static-assert
+pip install ailinttest
 ```
 
-Or if you're using Poetry:
+## Basic Usage
 
-```bash
-poetry add llm-static-assert
-```
-
-## Usage
-
-Here's a basic example of how to use LLM Static Assert:
+### With pytest
 
 ```python
-from llm_static_assert import LLMStaticAssert, LLMStaticAssertOptions
+from ailinttest import AILintTest
 
-# Create an instance of LLMStaticAssert with custom options
-options = LLMStaticAssertOptions(quorum_size=3, model="gpt-4o-mini")
-lsa = LLMStaticAssert(options)
-
-# Define a class or function you want to assert about
-class MyClass:
-    def some_method(self):
-        pass
-
-# Perform a static assertion
-lsa.static_assert(
-    "{class} should have a method named 'some_method'",
-    {"class": MyClass}
-)
+def test_code_properties():
+    ailint = AILintTest()
+    
+    # Test code organization
+    ailint.assert_code(
+        "Classes in {module} should follow the Single Responsibility Principle",
+        {"module": my_module}
+    )
+    
+    # Test security practices
+    ailint.assert_code(
+        "All database queries in {module} should be parameterized to prevent SQL injection",
+        {"module": db_module}
+    )
 ```
 
-In this example, we're asserting that `MyClass` has a method named `some_method`. The LLM will analyze the provided class and evaluate whether it meets this expectation.
-
-### Advanced Usage
-
-You can customize the assertion process by adjusting the `LLMStaticAssertOptions`:
+### With unittest
 
 ```python
-options = LLMStaticAssertOptions(
-    quorum_size=5,  # Perform 5 inferences and use majority voting
-    model="gpt-4"   # Use a more advanced model for complex assertions
-)
-lsa = LLMStaticAssert(options)
+import unittest
+from ailinttest import AILintTest
 
-# You can also provide custom options for a specific assertion
-lsa.static_assert(
-    "{class} should implement proper error handling in all methods",
-    {"class": MyComplexClass},
-    options=LLMStaticAssertOptions(quorum_size=7, model="gpt-4")
+class TestCodeQuality(unittest.TestCase):
+    def setUp(self):
+        self.ailint = AILintTest()
+    
+    def test_error_handling(self):
+        self.ailint.assert_code(
+            "All API endpoints in {module} should have proper input validation",
+            {"module": api_module}
+        )
+```
+
+## Advanced Usage
+
+### Custom Evaluation Options
+
+```python
+from ailinttest import AILintTest, AILintTestOptions
+
+options = AILintTestOptions(
+    quorum_size=7,              # Increase voting sample size
+    model="gpt-4o-2024-08-06",  # Use a more capable model
 )
+
+ailint = AILintTest(options)
 ```
 
 ## Contributing
 
-Contributions to LLM Static Assert are welcome! Please refer to the project's issues page on GitHub for areas where help is needed or to suggest improvements.
+Contributions are welcome!
 
 ## License
 
@@ -104,4 +132,4 @@ This project uses [LiteLLM](https://github.com/BerriAI/litellm) for LLM integrat
 
 ---
 
-LLM Static Assert is an experimental tool and should be used in conjunction with, not as a replacement for, traditional testing and static analysis methods. Always validate its results and use it responsibly.
+AILintTest is designed to complement, not replace, traditional testing approaches. It's most effective when used for complex code properties that are difficult to verify through conventional means.
