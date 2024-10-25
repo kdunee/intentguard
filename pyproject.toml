@@ -1,12 +1,12 @@
 [tool.poetry]
-name = "llm-static-assert"
-version = "0.1.0"
-description = "A Python library that leverages Language Models (LLMs) to perform static assertions on code, combining natural language flexibility with static analysis rigor."
+name = "ailinttest"
+version = "1.0.0"
+description = "A Python testing library that uses Large Language Models to verify code properties through natural language assertions."
 authors = ["Kosma Dunikowski <kosmadunikowski@gmail.com>"]
 license = "MIT"
 readme = "README.md"
-homepage = "https://github.com/kdunee/llm-static-assert"
-keywords = ["llm", "static-analysis", "assertions", "code-quality", "natural-language"]
+homepage = "https://github.com/kdunee/ailinttest"
+keywords = ["testing", "pytest", "unittest", "ai-testing", "llm", "code-verification", "natural-language", "test-automation", "code-quality", "language-models"]
 classifiers = [
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Quality Assurance",
