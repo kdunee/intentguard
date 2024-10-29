@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "ailinttest"
+name = "intentguard"
 version = "1.0.0"
-description = "A Python testing library that uses Large Language Models to verify code properties through natural language assertions."
+description = "A Python library for verifying code properties using natural language assertions."
 authors = ["Kosma Dunikowski <kosmadunikowski@gmail.com>"]
 license = "MIT"
 readme = "README.md"
-homepage = "https://github.com/kdunee/ailinttest"
+homepage = "https://github.com/kdunee/intentguard"
 keywords = ["testing", "pytest", "unittest", "ai-testing", "llm", "code-verification", "natural-language", "test-automation", "code-quality", "language-models"]
 classifiers = [
     "Intended Audience :: Developers",

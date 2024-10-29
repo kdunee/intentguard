@@ -1,4 +1,4 @@
-system_prompt = """Perform analysis of Python code by evaluating a condition against named objects composed of class or method definitions.
+system_prompt = """Analyze Python code by evaluating a condition against named objects (classes or methods).
 
 You will receive:
 - A list of named objects, where each object's value is the code of a class or method.

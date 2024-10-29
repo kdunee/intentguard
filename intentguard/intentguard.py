@@ -5,11 +5,11 @@ from collections import Counter
 
 from litellm import completion
 
-from ailinttest.ailinttest_options import AILintTestOptions
-from ailinttest.prompts import system_prompt, reponse_schema
+from intentguard.intentguard_options import IntentGuardOptions
+from intentguard.prompts import system_prompt, reponse_schema
 
 
-class AILintTest:
+class IntentGuard:
     """
     A class for performing code assertions using Language Models (LLMs).
 
@@ -18,23 +18,23 @@ class AILintTest:
     and provides customizable options for the assertion process.
     """
 
-    def __init__(self, options: AILintTestOptions = None):
+    def __init__(self, options: IntentGuardOptions = None):
         """
-        Initialize the AILintTest instance.
+        Initialize the IntentGuard instance.
 
         Args:
-            options (AILintTestOptions, optional): Configuration options for the assert.
+            options (IntentGuardOptions, optional): Configuration options for the assert.
                 If not provided, default options will be used.
         """
         if options is None:
-            options = AILintTestOptions()
+            options = IntentGuardOptions()
         self.options = options
 
     def assert_code(
         self,
         expectation: str,
         params: Dict[str, object],
-        options: AILintTestOptions = None,
+        options: IntentGuardOptions = None,
     ):
         """
         Perform an assertion using LLM inference.
@@ -46,7 +46,7 @@ class AILintTest:
         Args:
             expectation (str): The condition to be evaluated.
             params (Dict[str, object]): A dictionary of objects to be used in the evaluation.
-            options (AILintTestOptions, optional): Custom options for this specific assertion.
+            options (IntentGuardOptions, optional): Custom options for this specific assertion.
                 If not provided, the instance's default options will be used.
 
         Raises:
@@ -115,7 +115,9 @@ class AILintTest:
 "{expectation}"
 """
 
-    def _send_completion_request(self, prompt: str, options: AILintTestOptions) -> bool:
+    def _send_completion_request(
+        self, prompt: str, options: IntentGuardOptions
+    ) -> bool:
         """
         Send a completion request to the LLM and process the response.
 
@@ -124,7 +126,7 @@ class AILintTest:
 
         Args:
             prompt (str): The prepared prompt for the LLM.
-            options (AILintTestOptions): The options for the LLM request.
+            options (IntentGuardOptions): The options for the LLM request.
 
         Returns:
             bool: The boolean result of the LLM inference.

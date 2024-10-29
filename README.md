@@ -1,10 +1,10 @@
-# AILintTest
+# IntentGuard
 
-AILintTest is a Python testing library that uses Large Language Models to verify code properties through natural language assertions. It seamlessly integrates with popular testing frameworks like pytest and unittest, allowing developers to express complex code expectations in plain English while maintaining the structure of traditional test suites.
+IntentGuard is a Python library for verifying code properties using natural language assertions. It seamlessly integrates with popular testing frameworks like pytest and unittest, allowing developers to express complex code expectations in plain English while maintaining the structure of traditional test suites.
 
-## Why AILintTest?
+## Why IntentGuard?
 
-Traditional testing approaches often require extensive boilerplate code to verify complex properties. AILintTest bridges this gap by allowing developers to express sophisticated test cases in natural language, particularly useful for scenarios where writing conventional test code would be impractical or time-consuming.
+Traditional testing approaches often require extensive boilerplate code to verify complex properties. IntentGuard bridges this gap by allowing developers to express sophisticated test cases in natural language, particularly useful for scenarios where writing conventional test code would be impractical or time-consuming.
 
 ### Key Features
 
@@ -13,9 +13,9 @@ Traditional testing approaches often require extensive boilerplate code to verif
 3. **Deterministic Results**: Uses voting mechanism and controlled sampling for consistent results
 4. **Flexible Verification**: Test complex code properties that would be difficult to verify traditionally
 
-## When to Use AILintTest
+## When to Use IntentGuard
 
-AILintTest is designed for scenarios where traditional test implementation would be impractical or require excessive code. For example:
+IntentGuard is designed for scenarios where traditional test implementation would be impractical or require excessive code. For example:
 
 ```python
 # Traditional approach would require:
@@ -25,16 +25,16 @@ AILintTest is designed for scenarios where traditional test implementation would
 # 4. Verifying logging calls
 # 5. Maintaining complex test code
 
-# With AILintTest:
+# With IntentGuard:
 def test_error_handling():
-    ailint.assert_code(
+    ig.assert_code(
         "All methods in {module} should use the custom ErrorHandler class for exception management, and log errors before re-raising them",
         {"module": my_critical_module}
     )
 
 # Another example - checking documentation consistency
 def test_docstring_completeness():
-    ailint.assert_code(
+    ig.assert_code(
         "All public methods in {module} should have docstrings that include Parameters, Returns, and Examples sections",
         {"module": my_api_module}
     )
@@ -44,7 +44,7 @@ def test_docstring_completeness():
 
 ### Deterministic Testing
 
-AILintTest employs several mechanisms to ensure consistent and reliable results:
+IntentGuard employs several mechanisms to ensure consistent and reliable results:
 
 1. **Voting Mechanism**: Each assertion is evaluated multiple times (configurable through `quorum_size`), and the majority result is used
 2. **Temperature Control**: Uses low temperature for LLM sampling to reduce randomness
@@ -52,7 +52,7 @@ AILintTest employs several mechanisms to ensure consistent and reliable results:
 
 ```python
 # Configure determinism settings
-options = AILintTestOptions(
+options = IntentGuardOptions(
     quorum_size=5,          # Number of evaluations per assertion
 )
 ```
@@ -60,7 +60,7 @@ options = AILintTestOptions(
 ## Installation
 
 ```bash
-pip install ailinttest
+pip install intentguard
 ```
 
 ## Basic Usage
@@ -68,19 +68,19 @@ pip install ailinttest
 ### With pytest
 
 ```python
-from ailinttest import AILintTest
+import intentguard as ig
 
 def test_code_properties():
-    ailint = AILintTest()
+    guard = ig.IntentGuard()
     
     # Test code organization
-    ailint.assert_code(
+    guard.assert_code(
         "Classes in {module} should follow the Single Responsibility Principle",
         {"module": my_module}
     )
     
     # Test security practices
-    ailint.assert_code(
+    guard.assert_code(
         "All database queries in {module} should be parameterized to prevent SQL injection",
         {"module": db_module}
     )
@@ -90,14 +90,14 @@ def test_code_properties():
 
 ```python
 import unittest
-from ailinttest import AILintTest
+import intentguard as ig
 
 class TestCodeQuality(unittest.TestCase):
     def setUp(self):
-        self.ailint = AILintTest()
+        self.guard = ig.IntentGuard()
     
     def test_error_handling(self):
-        self.ailint.assert_code(
+        self.guard.assert_code(
             "All API endpoints in {module} should have proper input validation",
             {"module": api_module}
         )
@@ -108,14 +108,14 @@ class TestCodeQuality(unittest.TestCase):
 ### Custom Evaluation Options
 
 ```python
-from ailinttest import AILintTest, AILintTestOptions
+import intentguard as ig
 
-options = AILintTestOptions(
+options = ig.IntentGuardOptions(
     quorum_size=7,              # Increase voting sample size
     model="gpt-4o-2024-08-06",  # Use a more capable model
 )
 
-ailint = AILintTest(options)
+guard = ig.IntentGuard(options)
 ```
 
 ## Contributing
@@ -132,4 +132,4 @@ This project uses [LiteLLM](https://github.com/BerriAI/litellm) for LLM integrat
 
 ---
 
-AILintTest is designed to complement, not replace, traditional testing approaches. It's most effective when used for complex code properties that are difficult to verify through conventional means.
+IntentGuard is designed to complement, not replace, traditional testing approaches. It's most effective when used for complex code properties that are difficult to verify through conventional means.
