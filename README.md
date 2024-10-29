@@ -120,7 +120,7 @@ guard = ig.IntentGuard(options)
 
 ## Contributing
 
-Contributions are welcome!
+Contributions are welcome! Check out our [roadmap](ROADMAP.md) for planned features.
 
 ## License
 
