@@ -1,5 +1,12 @@
 # IntentGuard
 
+![GitHub Sponsors](https://img.shields.io/github/sponsors/kdunee)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/intentguard)
+![GitHub License](https://img.shields.io/github/license/kdunee/intentguard)
+![PyPI - Version](https://img.shields.io/pypi/v/intentguard)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/intentguard)
+
+
 IntentGuard is a Python library for verifying code properties using natural language assertions. It seamlessly integrates with popular testing frameworks like pytest and unittest, allowing developers to express complex code expectations in plain English while maintaining the structure of traditional test suites.
 
 ## Why IntentGuard?
