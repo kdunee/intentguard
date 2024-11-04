@@ -39,7 +39,7 @@ class TestCache(unittest.TestCase):
         objects_text = "test_objects_text"
         options = type("Options", (object,), {"model": "test_model", "quorum_size": 1})
         expected_key = hashlib.sha256(
-            f"{expectation}:{objects_text}:test_model:1".encode()
+            f"v1:{expectation}:{objects_text}:test_model:1".encode()
         ).hexdigest()
         generated_key = generate_cache_key(expectation, objects_text, options)
         self.assertEqual(generated_key, expected_key)

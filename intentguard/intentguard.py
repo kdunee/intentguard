@@ -1,125 +1,117 @@
-from typing import Dict
+from typing import Dict, List, Any, Optional
 import inspect
 import json
 from collections import Counter
+from dataclasses import dataclass
 
 from litellm import completion
+from litellm.main import ModelResponse
 
 from intentguard.intentguard_options import IntentGuardOptions
 from intentguard.prompts import system_prompt, reponse_schema, explanation_prompt
 from intentguard.cache import generate_cache_key, read_cache, write_cache, CachedResult
 
 
+@dataclass
+class LLMRequest:
+    """Configuration for an LLM API request"""
+
+    messages: List[Dict[str, str]]
+    model: str
+    temperature: float = 1e-3
+    response_format: Optional[Dict[str, Any]] = None
+
+
 class IntentGuard:
     """
     A class for performing code assertions using Language Models (LLMs).
 
-    This class allows for the evaluation of expectations against provided code objects
-    using LLM-based inference. It supports multiple inferences to achieve a quorum
-    and provides customizable options for the assertion process.
+    This class evaluates expectations against provided code objects using LLM-based inference.
+    It supports multiple inferences to achieve a consensus through voting and provides
+    customizable options for the assertion process.
     """
 
-    def __init__(self, options: IntentGuardOptions = None):
+    def __init__(self, options: Optional[IntentGuardOptions] = None):
         """
         Initialize the IntentGuard instance.
 
         Args:
-            options (IntentGuardOptions, optional): Configuration options for the assert.
-                If not provided, default options will be used.
+            options: Configuration options for assertions. Uses default options if None.
         """
-        if options is None:
-            options = IntentGuardOptions()
-        self.options = options
+        self.options = options or IntentGuardOptions()
 
     def assert_code(
         self,
         expectation: str,
         params: Dict[str, object],
-        options: IntentGuardOptions = None,
-    ):
+        options: Optional[IntentGuardOptions] = None,
+    ) -> None:
         """
-        Perform an assertion using LLM inference.
+        Assert that code meets an expected condition using LLM inference.
 
-        This method evaluates the given expectation against the provided parameters
-        using LLM-based inference. It performs multiple inferences based on the
-        quorum size and determines the final result through voting.
+        Performs multiple LLM inferences and uses majority voting to determine if the
+        code meets the specified expectation. Results are cached for performance.
 
         Args:
-            expectation (str): The condition to be evaluated.
-            params (Dict[str, object]): A dictionary of objects to be used in the evaluation.
-            options (IntentGuardOptions, optional): Custom options for this specific assertion.
-                If not provided, the instance's default options will be used.
+            expectation: The condition to evaluate, expressed in natural language
+            params: Dictionary mapping variable names to code objects for evaluation
+            options: Custom options for this assertion, falls back to instance defaults
 
         Raises:
-            AssertionError: If the final result of the assertion is False.
+            AssertionError: If the code does not meet the expected condition
         """
-        if options is None:
-            options = self.options
+        options = options or self.options
 
-        objects_text = self._generate_objects_text(params)
-        prompt = self._create_prompt(objects_text, expectation)
-
+        # Prepare evaluation context
+        objects_text = self._format_code_objects(params)
+        prompt = self._create_evaluation_prompt(objects_text, expectation)
         cache_key = generate_cache_key(expectation, objects_text, options)
-        cached_result = read_cache(cache_key)
 
-        if cached_result:
-            final_result = CachedResult.from_dict(cached_result)
-        else:
-            results = []
-            for _ in range(options.quorum_size):
-                result = self._send_completion_request(prompt, options)
-                results.append(result)
+        # Check cache or perform evaluation
+        final_result = self._get_cached_or_evaluate(
+            cache_key=cache_key, prompt=prompt, options=options
+        )
 
-            final_result = CachedResult(result=self._vote_on_results(results))
-
-            if not final_result.result:
-                explanation = self._generate_explanation(prompt, options)
-                final_result.explanation = explanation
-
-            write_cache(cache_key, final_result.to_dict())
-
+        # Handle failed assertions
         if not final_result.result:
             raise AssertionError(
-                f'Expected "{expectation}" to be true, but it was false. Explanation: {final_result.explanation}'
+                f'Expected "{expectation}" to be true, but it was false.\n'
+                f"Explanation: {final_result.explanation}"
             )
 
-    def _generate_objects_text(self, params: Dict[str, object]) -> str:
+    def _format_code_objects(self, params: Dict[str, object]) -> str:
         """
-        Generate a formatted string representation of the provided objects.
+        Format code objects for LLM evaluation.
 
-        This method creates a string containing the source code of each object
-        in the params dictionary, formatted for use in the LLM prompt.
+        Extracts and formats the source code of each object in the params dictionary.
 
         Args:
-            params (Dict[str, object]): A dictionary of objects to be formatted.
+            params: Dictionary of named code objects
 
         Returns:
-            str: A formatted string containing the source code of all objects.
+            Formatted string containing source code of all objects
         """
-        objects_texts = []
+        formatted_objects = []
         for name, obj in params.items():
             source = inspect.getsource(obj)
-            object_text = f"""{{{name}}}:
+            formatted_objects.append(
+                f"""{{{name}}}:
 ```py
 {source}
-```
-"""
-            objects_texts.append(object_text)
-        return "\n".join(objects_texts)
+```"""
+            )
+        return "\n".join(formatted_objects)
 
-    def _create_prompt(self, objects_text: str, expectation: str) -> str:
+    def _create_evaluation_prompt(self, objects_text: str, expectation: str) -> str:
         """
-        Create the prompt for the LLM inference.
-
-        This method combines the formatted objects text and the expectation
-        into a single prompt string for the LLM.
+        Create the complete prompt for LLM evaluation.
 
         Args:
-            objects_text (str): The formatted string of object source codes.
-            expectation (str): The condition to be evaluated.
+            objects_text: Formatted source code of objects to evaluate
+            expectation: The condition to evaluate
 
         Returns:
-            str: The complete prompt for the LLM inference.
+            Complete prompt string for LLM
         """
         return f"""**Objects:**
 {objects_text}
@@ -128,77 +120,118 @@ class IntentGuard:
 "{expectation}"
 """
 
-    def _send_completion_request(
+    def _get_cached_or_evaluate(
+        self, cache_key: str, prompt: str, options: IntentGuardOptions
+    ) -> CachedResult:
+        """
+        Retrieve cached result or perform new evaluation.
+
+        Args:
+            cache_key: Key for cache lookup
+            prompt: Evaluation prompt if cache miss
+            options: Configuration options for evaluation
+
+        Returns:
+            Evaluation result, either from cache or newly computed
+        """
+        if cached_result := read_cache(cache_key):
+            return CachedResult.from_dict(cached_result)
+
+        # Perform multiple evaluations for consensus
+        results = [
+            self._perform_single_evaluation(prompt, options)
+            for _ in range(options.quorum_size)
+        ]
+
+        final_result = CachedResult(result=self._determine_consensus(results))
+
+        # Generate explanation for failed assertions
+        if not final_result.result:
+            final_result.explanation = self._generate_failure_explanation(
+                prompt, options
+            )
+
+        write_cache(cache_key, final_result.to_dict())
+        return final_result
+
+    def _perform_single_evaluation(
         self, prompt: str, options: IntentGuardOptions
     ) -> bool:
         """
-        Send a completion request to the LLM and process the response.
-
-        This method sends the prepared prompt to the LLM using the specified options,
-        and processes the response to extract the boolean result.
+        Perform a single LLM evaluation.
 
         Args:
-            prompt (str): The prepared prompt for the LLM.
-            options (IntentGuardOptions): The options for the LLM request.
+            prompt: The evaluation prompt
+            options: Configuration options
 
         Returns:
-            bool: The boolean result of the LLM inference.
+            Boolean result of evaluation
         """
-        messages = [
-            {"content": system_prompt, "role": "system"},
-            {"content": prompt, "role": "user"},
-        ]
-
-        response = completion(
+        request = LLMRequest(
+            messages=[
+                {"content": system_prompt, "role": "system"},
+                {"content": prompt, "role": "user"},
+            ],
             model=options.model,
-            messages=messages,
             response_format={
                 "type": "json_schema",
                 "json_schema": reponse_schema,
             },
-            temperature=1e-3,
         )
+
+        response = self._send_llm_request(request)
         return json.loads(response.choices[0].message.content)["result"]
 
-    def _generate_explanation(self, prompt: str, options: IntentGuardOptions) -> str:
+    def _generate_failure_explanation(
+        self, prompt: str, options: IntentGuardOptions
+    ) -> str:
         """
-        Generate a detailed explanation for a failed assertion using the LLM.
-
-        This method sends a request to the LLM to generate a human-readable explanation
-        for why the given expectation was not met based on the provided objects.
+        Generate explanation for failed assertion.
 
         Args:
-            objects_text (str): The formatted string of object source codes.
-            expectation (str): The condition that was evaluated.
-            options (IntentGuardOptions): The options for the LLM request.
+            prompt: The evaluation prompt
+            options: Configuration options
 
         Returns:
-            str: A detailed explanation of why the assertion failed.
+            Detailed explanation of why assertion failed
         """
-        messages = [
-            {"content": explanation_prompt, "role": "system"},
-            {"content": prompt, "role": "user"},
-        ]
-
-        response = completion(
+        request = LLMRequest(
+            messages=[
+                {"content": explanation_prompt, "role": "system"},
+                {"content": prompt, "role": "user"},
+            ],
             model=options.model,
-            messages=messages,
-            temperature=1e-3,
         )
+
+        response = self._send_llm_request(request)
         return response.choices[0].message.content
 
-    def _vote_on_results(self, results: list) -> bool:
+    def _send_llm_request(self, request: LLMRequest) -> ModelResponse:
         """
-        Determine the final result based on voting.
-
-        This method takes the list of boolean results from multiple LLM inferences
-        and determines the final result through a simple majority vote.
+        Send request to LLM API.
 
         Args:
-            results (list): A list of boolean results from multiple LLM inferences.
+            request: Configuration for the API request
 
         Returns:
-            bool: The final result based on majority voting.
+            API response
+        """
+        return completion(
+            model=request.model,
+            messages=request.messages,
+            temperature=request.temperature,
+            response_format=request.response_format,
+        )
+
+    def _determine_consensus(self, results: List[bool]) -> bool:
+        """
+        Determine final result through majority voting.
+
+        Args:
+            results: List of boolean results from multiple evaluations
+
+        Returns:
+            Consensus result
         """
         vote_count = Counter(results)
         return vote_count[True] > vote_count[False]
