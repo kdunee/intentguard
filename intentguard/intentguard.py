@@ -6,7 +6,7 @@ from collections import Counter
 from litellm import completion
 
 from intentguard.intentguard_options import IntentGuardOptions
-from intentguard.prompts import system_prompt, reponse_schema
+from intentguard.prompts import system_prompt, reponse_schema, explanation_prompt
 
 
 class IntentGuard:
@@ -66,8 +66,9 @@ class IntentGuard:
         final_result = self._vote_on_results(results)
 
         if not final_result:
+            explanation = self._generate_explanation(prompt, options)
             raise AssertionError(
-                f'Expected "{expectation}" to be true, but it was false'
+                f'Expected "{expectation}" to be true, but it was false. Explanation: {explanation}'
             )
 
     def _generate_objects_text(self, params: Dict[str, object]) -> str:
@@ -146,6 +147,33 @@ class IntentGuard:
             temperature=1e-3,
         )
         return json.loads(response.choices[0].message.content)["result"]
+
+    def _generate_explanation(self, prompt: str, options: IntentGuardOptions) -> str:
+        """
+        Generate a detailed explanation for a failed assertion using the LLM.
+
+        This method sends a request to the LLM to generate a human-readable explanation
+        for why the given expectation was not met based on the provided objects.
+
+        Args:
+            objects_text (str): The formatted string of object source codes.
+            expectation (str): The condition that was evaluated.
+            options (IntentGuardOptions): The options for the LLM request.
+
+        Returns:
+            str: A detailed explanation of why the assertion failed.
+        """
+        messages = [
+            {"content": explanation_prompt, "role": "system"},
+            {"content": prompt, "role": "user"},
+        ]
+
+        response = completion(
+            model=options.model,
+            messages=messages,
+            temperature=1e-3,
+        )
+        return response.choices[0].message.content
 
     def _vote_on_results(self, results: list) -> bool:
         """
