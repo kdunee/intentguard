@@ -4,7 +4,7 @@
   - Detailed reasoning for why assertions failed
   - Suggestions for fixing the issues
 
-- [ ] Result Caching (https://github.com/kdunee/intentguard/issues/3)
+- [x] Result Caching (https://github.com/kdunee/intentguard/issues/3)
   - Speed up local execution by caching assertion results
   - Avoid redundant LLM calls for unchanged code
 
