@@ -1,6 +1,6 @@
 # IntentGuard Roadmap
 
-- [ ] Failed Assertion Explanations (https://github.com/kdunee/intentguard/issues/2)
+- [x] Failed Assertion Explanations (https://github.com/kdunee/intentguard/issues/2)
   - Detailed reasoning for why assertions failed
   - Suggestions for fixing the issues
 
