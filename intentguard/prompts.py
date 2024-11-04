@@ -90,10 +90,10 @@ class AnotherClass:
 ```
 
 **Failed Condition:**
-"{obj1} has method method and {obj2} has method another_method"
+"{obj1} has method another_method and {obj2} has method method"
 
 ### Output
-The condition "{obj1} has method method and {obj2} has method another_method" was not met because {obj1} does not have a method named 'method' and {obj2} does not have a method named 'another_method'.
+The condition was not met because {obj1} does not have a method named 'another_method' and {obj2} does not have a method named 'method'.
 """
 
 reponse_schema = {
