@@ -7,6 +7,7 @@ from litellm import completion
 
 from intentguard.intentguard_options import IntentGuardOptions
 from intentguard.prompts import system_prompt, reponse_schema, explanation_prompt
+from intentguard.cache import generate_cache_key, read_cache, write_cache, CachedResult
 
 
 class IntentGuard:
@@ -58,17 +59,28 @@ class IntentGuard:
         objects_text = self._generate_objects_text(params)
         prompt = self._create_prompt(objects_text, expectation)
 
-        results = []
-        for _ in range(options.quorum_size):
-            result = self._send_completion_request(prompt, options)
-            results.append(result)
+        cache_key = generate_cache_key(expectation, objects_text, options)
+        cached_result = read_cache(cache_key)
 
-        final_result = self._vote_on_results(results)
+        if cached_result:
+            final_result = CachedResult.from_dict(cached_result)
+        else:
+            results = []
+            for _ in range(options.quorum_size):
+                result = self._send_completion_request(prompt, options)
+                results.append(result)
 
-        if not final_result:
-            explanation = self._generate_explanation(prompt, options)
+            final_result = CachedResult(result=self._vote_on_results(results))
+
+            if not final_result.result:
+                explanation = self._generate_explanation(prompt, options)
+                final_result.explanation = explanation
+
+            write_cache(cache_key, final_result.to_dict())
+
+        if not final_result.result:
             raise AssertionError(
-                f'Expected "{expectation}" to be true, but it was false. Explanation: {explanation}'
+                f'Expected "{expectation}" to be true, but it was false. Explanation: {final_result.explanation}'
             )
 
     def _generate_objects_text(self, params: Dict[str, object]) -> str:
