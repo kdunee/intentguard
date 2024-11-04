@@ -148,9 +148,7 @@ class IntentGuard:
         )
         return json.loads(response.choices[0].message.content)["result"]
 
-    def _generate_explanation(
-        self, prompt: str, options: IntentGuardOptions
-    ) -> str:
+    def _generate_explanation(self, prompt: str, options: IntentGuardOptions) -> str:
         """
         Generate a detailed explanation for a failed assertion using the LLM.
 
