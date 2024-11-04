@@ -14,10 +14,11 @@ class TestIntentGuard(unittest.TestCase):
         )
 
     def test_assert_code_false(self):
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(AssertionError) as cm:
             self.guard.assert_code(
                 "{class} should not have any methods", {"class": IntentGuard}
             )
+        self.assertIn("Explanation:", str(cm.exception))
 
     def test_guard_options(self):
         self.guard.assert_code(
