@@ -6,7 +6,7 @@ from collections import Counter
 from litellm import completion
 
 from intentguard.intentguard_options import IntentGuardOptions
-from intentguard.prompts import system_prompt, reponse_schema
+from intentguard.prompts import system_prompt, reponse_schema, explanation_prompt
 
 
 class IntentGuard:
@@ -66,7 +66,7 @@ class IntentGuard:
         final_result = self._vote_on_results(results)
 
         if not final_result:
-            explanation = self._generate_explanation(objects_text, expectation, options)
+            explanation = self._generate_explanation(prompt, options)
             raise AssertionError(
                 f'Expected "{expectation}" to be true, but it was false. Explanation: {explanation}'
             )
@@ -149,7 +149,7 @@ class IntentGuard:
         return json.loads(response.choices[0].message.content)["result"]
 
     def _generate_explanation(
-        self, objects_text: str, expectation: str, options: IntentGuardOptions
+        self, prompt: str, options: IntentGuardOptions
     ) -> str:
         """
         Generate a detailed explanation for a failed assertion using the LLM.
@@ -165,15 +165,9 @@ class IntentGuard:
         Returns:
             str: A detailed explanation of why the assertion failed.
         """
-        explanation_prompt = f"""**Objects:**
-{objects_text}
-
-**Failed Condition:**
-"{expectation}"
-"""
         messages = [
-            {"content": system_prompt, "role": "system"},
-            {"content": explanation_prompt, "role": "user"},
+            {"content": explanation_prompt, "role": "system"},
+            {"content": prompt, "role": "user"},
         ]
 
         response = completion(
