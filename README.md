@@ -15,10 +15,12 @@ Traditional testing approaches often require extensive boilerplate code to verif
 
 ### Key Features
 
-1. **Natural Language Test Cases**: Write test assertions in plain English
-2. **Framework Integration**: Works with pytest, unittest, and other testing frameworks
-3. **Deterministic Results**: Uses voting mechanism and controlled sampling for consistent results
-4. **Flexible Verification**: Test complex code properties that would be difficult to verify traditionally
+1. **Natural Language Test Cases:** Write test assertions in plain English.
+2. **Framework Integration:** Works with pytest, unittest, and other testing frameworks.
+3. **Deterministic Results:** Uses a voting mechanism and controlled sampling for consistent results.
+4. **Flexible Verification:** Test complex code properties that would be difficult to verify traditionally.
+5. **Detailed Failure Explanations:** Provides clear explanations when assertions fail, helping you understand the root cause and fix issues faster.
+6. **Efficient Result Caching:** Caches assertion results to avoid redundant processing and speed up test execution.
 
 ## When to Use IntentGuard
 
