@@ -37,7 +37,9 @@ class TestCache(unittest.TestCase):
     def test_generate_cache_key(self):
         expectation = "test_expectation"
         objects_text = "test_objects_text"
-        options = type("Options", (object,), {"model": "test_model", "quorum_size": 1})
+        options = type(
+            "Options", (object,), {"model": "test_model", "num_evaluations": 1}
+        )
         expected_key = hashlib.sha256(
             f"v1:{expectation}:{objects_text}:test_model:1".encode()
         ).hexdigest()

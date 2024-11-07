@@ -55,14 +55,14 @@ def test_docstring_completeness():
 
 IntentGuard employs several mechanisms to ensure consistent and reliable results:
 
-1. **Voting Mechanism**: Each assertion is evaluated multiple times (configurable through `quorum_size`), and the majority result is used
+1. **Voting Mechanism**: Each assertion is evaluated multiple times (configurable through `num_evaluations`), and the majority result is used
 2. **Temperature Control**: Uses low temperature for LLM sampling to reduce randomness
 3. **Structured Prompts**: Converts natural language assertions into structured prompts for consistent LLM interpretation
 
 ```python
 # Configure determinism settings
 options = IntentGuardOptions(
-    quorum_size=5,          # Number of evaluations per assertion
+    num_evaluations=5,      # Number of evaluations per assertion
 )
 ```
 
@@ -120,7 +120,7 @@ class TestCodeQuality(unittest.TestCase):
 import intentguard as ig
 
 options = ig.IntentGuardOptions(
-    quorum_size=7,              # Increase voting sample size
+    num_evaluations=7,          # Increase number of evaluations
     model="gpt-4o-2024-08-06",  # Use a more capable model
 )
 

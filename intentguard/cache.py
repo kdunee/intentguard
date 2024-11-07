@@ -31,13 +31,13 @@ def generate_cache_key(expectation: str, objects_text: str, options) -> str:
     Args:
         expectation (str): The expectation string being tested
         objects_text (str): The text of the objects being analyzed
-        options: Configuration object containing model and quorum settings
+        options: Configuration object containing model and evaluation settings
 
     Returns:
         str: A SHA-256 hash that serves as the cache key
     """
     key_string = (
-        f"v1:{expectation}:{objects_text}:{options.model}:{options.quorum_size}"
+        f"v1:{expectation}:{objects_text}:{options.model}:{options.num_evaluations}"
     )
     return hashlib.sha256(key_string.encode()).hexdigest()
 

@@ -8,11 +8,11 @@
   - Speed up local execution by caching assertion results
   - Avoid redundant LLM calls for unchanged code
 
-- [ ] Quorum Modes (strict/balanced/relaxed) (https://github.com/kdunee/intentguard/issues/4)
-  - Strict: requires unanimous agreement
+- [ ] Aggregation Modes (strict/balanced/relaxed) (https://github.com/kdunee/intentguard/issues/4)
+  - Strict: requires unanimous agreement across all evaluations
   - Balanced: uses majority voting
-  - Relaxed: requires only one agreement
-     
+  - Relaxed: requires only one positive evaluation
+
 - [ ] File Reference in Assertions (https://github.com/kdunee/intentguard/issues/6)
   - Allow referencing files in assertions
   - Handle potentially large files efficiently

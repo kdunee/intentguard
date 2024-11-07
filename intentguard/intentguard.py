@@ -140,7 +140,7 @@ class IntentGuard:
         # Perform multiple evaluations for consensus
         results = [
             self._perform_single_evaluation(prompt, options)
-            for _ in range(options.quorum_size)
+            for _ in range(options.num_evaluations)
         ]
 
         final_result = CachedResult(result=self._determine_consensus(results))
