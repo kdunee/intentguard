@@ -1,4 +1,4 @@
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, cast
 import inspect
 import json
 from collections import Counter
@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from litellm import completion
 from litellm.main import ModelResponse
+from litellm.types.utils import Choices
 
 from intentguard.intentguard_options import IntentGuardOptions
 from intentguard.prompts import system_prompt, reponse_schema, explanation_prompt
@@ -78,6 +79,7 @@ class IntentGuard:
                 f'Expected "{expectation}" to be true, but it was false.\n'
                 f"Explanation: {final_result.explanation}"
             )
+
     def _format_code_objects(self, params: Dict[str, Any]) -> str:
         """
         Format code objects for LLM evaluation.
@@ -142,7 +144,9 @@ class IntentGuard:
             for _ in range(options.num_evaluations)
         ]
 
-        final_result: CachedResult = CachedResult(result=self._determine_consensus(results))
+        final_result: CachedResult = CachedResult(
+            result=self._determine_consensus(results)
+        )
 
         # Generate explanation for failed assertions
         if not final_result.result:
@@ -179,7 +183,9 @@ class IntentGuard:
         )
 
         response: ModelResponse = self._send_llm_request(request)
-        return json.loads(response.choices[0].message.content)["result"]
+        return json.loads(
+            cast(str, cast(Choices, response.choices[0]).message.content)
+        )["result"]
 
     def _generate_failure_explanation(
         self, prompt: str, options: IntentGuardOptions
@@ -203,7 +209,7 @@ class IntentGuard:
         )
 
         response: ModelResponse = self._send_llm_request(request)
-        return response.choices[0].message.content
+        return cast(str, cast(Choices, response.choices[0]).message.content)
 
     def _send_llm_request(self, request: LLMRequest) -> ModelResponse:
         """

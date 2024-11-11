@@ -22,7 +22,9 @@ def ensure_cache_dir_exists() -> None:
         os.makedirs(CACHE_DIR)
 
 
-def generate_cache_key(expectation: str, objects_text: str, options: IntentGuardOptions) -> str:
+def generate_cache_key(
+    expectation: str, objects_text: str, options: IntentGuardOptions
+) -> str:
     """
     Generates a unique cache key based on the input parameters and model configuration.
 
