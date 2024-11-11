@@ -10,7 +10,7 @@ class IntentGuardOptions:
         self,
         model: str = "gpt-4o-mini-2024-07-18",
         num_evaluations: int = 1,
-    ):
+    ) -> None:
         """
         Initialize IntentGuardOptions with the specified parameters.
 
@@ -21,5 +21,5 @@ class IntentGuardOptions:
                 for each assertion. The final result is determined by majority vote.
                 Defaults to 1.
         """
-        self.model = model
-        self.num_evaluations = num_evaluations
+        self.model: str = model
+        self.num_evaluations: int = num_evaluations

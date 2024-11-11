@@ -31,14 +31,14 @@ class IntentGuard:
     customizable options for the assertion process.
     """
 
-    def __init__(self, options: Optional[IntentGuardOptions] = None):
+    def __init__(self, options: Optional[IntentGuardOptions] = None) -> None:
         """
         Initialize the IntentGuard instance.
 
         Args:
             options: Configuration options for assertions. Uses default options if None.
         """
-        self.options = options or IntentGuardOptions()
+        self.options: IntentGuardOptions = options or IntentGuardOptions()
 
     def assert_code(
         self,
@@ -63,12 +63,12 @@ class IntentGuard:
         options = options or self.options
 
         # Prepare evaluation context
-        objects_text = self._format_code_objects(params)
-        prompt = self._create_evaluation_prompt(objects_text, expectation)
-        cache_key = generate_cache_key(expectation, objects_text, options)
+        objects_text: str = self._format_code_objects(params)
+        prompt: str = self._create_evaluation_prompt(objects_text, expectation)
+        cache_key: str = generate_cache_key(expectation, objects_text, options)
 
         # Check cache or perform evaluation
-        final_result = self._get_cached_or_evaluate(
+        final_result: CachedResult = self._get_cached_or_evaluate(
             cache_key=cache_key, prompt=prompt, options=options
         )
 
@@ -78,8 +78,7 @@ class IntentGuard:
                 f'Expected "{expectation}" to be true, but it was false.\n'
                 f"Explanation: {final_result.explanation}"
             )
-
-    def _format_code_objects(self, params: Dict[str, object]) -> str:
+    def _format_code_objects(self, params: Dict[str, Any]) -> str:
         """
         Format code objects for LLM evaluation.
 
@@ -91,9 +90,9 @@ class IntentGuard:
         Returns:
             Formatted string containing source code of all objects
         """
-        formatted_objects = []
+        formatted_objects: List[str] = []
         for name, obj in params.items():
-            source = inspect.getsource(obj)
+            source: str = inspect.getsource(obj)
             formatted_objects.append(
                 f"""{{{name}}}:
 ```py
@@ -138,12 +137,12 @@ class IntentGuard:
             return CachedResult.from_dict(cached_result)
 
         # Perform multiple evaluations for consensus
-        results = [
+        results: List[bool] = [
             self._perform_single_evaluation(prompt, options)
             for _ in range(options.num_evaluations)
         ]
 
-        final_result = CachedResult(result=self._determine_consensus(results))
+        final_result: CachedResult = CachedResult(result=self._determine_consensus(results))
 
         # Generate explanation for failed assertions
         if not final_result.result:
@@ -167,7 +166,7 @@ class IntentGuard:
         Returns:
             Boolean result of evaluation
         """
-        request = LLMRequest(
+        request: LLMRequest = LLMRequest(
             messages=[
                 {"content": system_prompt, "role": "system"},
                 {"content": prompt, "role": "user"},
@@ -179,7 +178,7 @@ class IntentGuard:
             },
         )
 
-        response = self._send_llm_request(request)
+        response: ModelResponse = self._send_llm_request(request)
         return json.loads(response.choices[0].message.content)["result"]
 
     def _generate_failure_explanation(
@@ -195,7 +194,7 @@ class IntentGuard:
         Returns:
             Detailed explanation of why assertion failed
         """
-        request = LLMRequest(
+        request: LLMRequest = LLMRequest(
             messages=[
                 {"content": explanation_prompt, "role": "system"},
                 {"content": prompt, "role": "user"},
@@ -203,7 +202,7 @@ class IntentGuard:
             model=options.model,
         )
 
-        response = self._send_llm_request(request)
+        response: ModelResponse = self._send_llm_request(request)
         return response.choices[0].message.content
 
     def _send_llm_request(self, request: LLMRequest) -> ModelResponse:
@@ -233,5 +232,5 @@ class IntentGuard:
         Returns:
             Consensus result
         """
-        vote_count = Counter(results)
+        vote_count: Counter = Counter(results)
         return vote_count[True] > vote_count[False]
