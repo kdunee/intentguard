@@ -40,6 +40,9 @@ jobs:
       - name: Run ruff format check
         run: |
           poetry run ruff format --check .
+      - name: Run mypy check
+        run: |
+          poetry run mypy .
       - name: Run tests
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

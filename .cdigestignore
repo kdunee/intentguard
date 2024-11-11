@@ -1,0 +1,9 @@
+.ruff_cache
+dist
+.venv
+design
+assets
+poetry.lock
+.cdigestignore
+LICENSE
+._codebase_digest.txt

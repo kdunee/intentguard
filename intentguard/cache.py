@@ -6,12 +6,14 @@ It stores results in JSON files within a .intentguard directory, using SHA-256 h
 import os
 import hashlib
 import json
+from typing import Optional, Dict, Any
+from intentguard.intentguard_options import IntentGuardOptions
 
 # Directory where cache files will be stored
 CACHE_DIR = ".intentguard"
 
 
-def ensure_cache_dir_exists():
+def ensure_cache_dir_exists() -> None:
     """
     Creates the cache directory if it doesn't exist.
     This is called before any cache operations to ensure the cache directory is available.
@@ -20,7 +22,9 @@ def ensure_cache_dir_exists():
         os.makedirs(CACHE_DIR)
 
 
-def generate_cache_key(expectation: str, objects_text: str, options) -> str:
+def generate_cache_key(
+    expectation: str, objects_text: str, options: IntentGuardOptions
+) -> str:
     """
     Generates a unique cache key based on the input parameters and model configuration.
 
@@ -42,7 +46,7 @@ def generate_cache_key(expectation: str, objects_text: str, options) -> str:
     return hashlib.sha256(key_string.encode()).hexdigest()
 
 
-def read_cache(cache_key: str):
+def read_cache(cache_key: str) -> Optional[Dict[str, Any]]:
     """
     Retrieves cached results for a given cache key.
 
@@ -60,7 +64,7 @@ def read_cache(cache_key: str):
     return None
 
 
-def write_cache(cache_key: str, result):
+def write_cache(cache_key: str, result: Dict[str, Any]) -> None:
     """
     Stores a result in the cache using the provided cache key.
 
@@ -93,7 +97,7 @@ class CachedResult:
         self.result = result
         self.explanation = explanation
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         """
         Converts the CachedResult instance to a dictionary for JSON serialization.
 
@@ -103,7 +107,7 @@ class CachedResult:
         return {"result": self.result, "explanation": self.explanation}
 
     @classmethod
-    def from_dict(cls, data: dict):
+    def from_dict(cls, data: Dict[str, Any]) -> "CachedResult":
         """
         Creates a CachedResult instance from a dictionary.
 
