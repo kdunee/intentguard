@@ -1,7 +1,7 @@
 # IntentGuard
 
 ![GitHub Sponsors](https://img.shields.io/github/sponsors/kdunee)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/intentguard)
+![PyPI - Downloads](https://static.pepy.tech/badge/intentguard)
 ![GitHub License](https://img.shields.io/github/license/kdunee/intentguard)
 ![PyPI - Version](https://img.shields.io/pypi/v/intentguard)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/intentguard)
