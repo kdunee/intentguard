@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "intentguard"
-version = "1.3.0-dev"
+version = "1.3.0"
 description = "A Python library for verifying code properties using natural language assertions."
 authors = ["Kosma Dunikowski <kosmadunikowski@gmail.com>"]
 license = "MIT"
