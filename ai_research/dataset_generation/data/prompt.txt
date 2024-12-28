@@ -1,0 +1,195 @@
+Your task is to generate high-quality training examples for the **{{.Category}}** category. Each example includes:
+
+1. A natural language assertion describing positive properties of the code.
+2. Python code snippets for each referenced component.
+3. A [Thinking] section that provides a chain-of-thought analysis of the assertion and code, assuming no prior knowledge of whether this is a positive or negative example.
+4. If it is a negative example, an explanation detailing why the code does not meet the assertion.
+
+Follow the instructions below very carefully.
+
+---
+
+### FORMAT AND EXAMPLE STRUCTURE
+
+You must produce outputs in the following structure.
+
+**Format:**
+
+````
+### Example Set
+
+[Assertion]
+"{natural_language_assertion}"
+
+[Code]
+{component1}:
+```python
+# Complete implementation of {component1}
+```
+
+{component2}:
+```python
+# Complete implementation of {component2}
+```
+
+[... Repeat for all referenced components in the assertion ...]
+
+[Thinking]
+# In this section, provide a chain-of-thought style analysis of the assertion and the code.
+# This should be done assuming no prior knowledge of whether the example is positive or negative.
+# Focus on how the code relates to the assertion and consider whether the code meets the described properties.
+
+[Explanation]
+# Only include this section for negative examples.
+# Use bullet points and a short paragraph explaining where the code fails.
+````
+
+---
+
+### REQUIREMENTS
+
+1. **Assertion Guidelines:**
+   - Assertions must describe positive, desirable properties. They should reflect expectations related to the category (**{{.Category}}**).
+   - Use `{name}` notation to refer to code components. For example: `{database_service}`.
+   - Every `{name}` mentioned in the assertion must appear as a code component under [Code].
+   - Do not mention failures or negative aspects in the assertion. Failures appear only in the explanation section for negative examples.
+
+2. **Code Guidelines:**
+   - For every `{name}` in the assertion, provide a corresponding Python code implementation block in the [Code] section.
+   - The code should be realistic, follow Python best practices, and either demonstrate adherence to the assertion (positive example) or fail to do so (negative example).
+   - Code should be coherent and self-contained. Even in negative examples, it should not be blatantly nonsensical.
+
+3. **[Thinking] Section:**
+   - After providing the code, include a [Thinking] section.
+   - In this section, provide a chain-of-thought style reasoning process that examines whether the code aligns with the assertion.
+   - Write it as if you do not know beforehand if the example will be positive or negative.
+   - Consider the relationship between the assertion and the code, discussing how the code attempts to meet (or not meet) the conditions described.
+
+4. **Explanation Guidelines (for Negative Examples Only):**
+   - Explain why the code fails to meet the assertion.
+   - Keep the explanation concise (a single short paragraph).
+   - Use bullet points to highlight key discrepancies.
+   - Focus on direct contradictions or omissions in relation to the assertion.
+
+5. **Balance Between Positive and Negative Examples:**
+   - Produce a mix of positive and negative examples in roughly a 1:1 ratio.
+
+6. **Category-Specific Details:**
+   - Ensure that the properties described in the assertions make sense for the given category (**{{.Category}}**).
+   - The code and assertions should be realistic demonstrations of best practices or common pitfalls relevant to that category.
+
+---
+
+### EXAMPLES
+
+**Positive Example (Category: Error Handling)**
+
+````
+### Example Set
+
+[Assertion]
+"All methods in {database_service} use {error_handler} to manage and log exceptions."
+
+[Code]
+{database_service}:
+```python
+class DatabaseService:
+    def __init__(self, error_handler):
+        self.error_handler = error_handler
+
+    def execute_query(self, query):
+        with self.error_handler.handle_operation("database_query"):
+            result = self._run_query(query)
+            return result
+
+    def _run_query(self, query):
+        # Simulate the actual database operation
+        pass
+```
+
+{error_handler}:
+```python
+from contextlib import contextmanager
+
+class ErrorHandler:
+    def __init__(self):
+        self.logger = Logger()
+
+    @contextmanager
+    def handle_operation(self, operation_name):
+        try:
+            yield
+        except Exception as e:
+            self.logger.error(f"{operation_name} failed: {str(e)}")
+            raise
+```
+
+[Thinking]
+- The assertion says all methods in the database_service use the error_handler to manage exceptions.
+- The code for DatabaseService shows that `execute_query` uses `self.error_handler.handle_operation(...)`.
+- This suggests that any exceptions raised inside `_run_query` would be caught and logged by the error_handler.
+- The error_handler class uses a contextmanager that logs errors and re-raises them, which aligns with the assertion.
+- The code seems to meet the requirement described in the assertion.
+
+````
+
+**Negative Example (Category: Design Patterns)**
+
+````
+### Example Set
+
+[Assertion]
+"All classes in {payment_gateway} use {payment_strategy_interface} to manage payment methods, following the Strategy pattern."
+
+[Code]
+{payment_gateway}:
+```python
+class PaymentGateway:
+    def __init__(self):
+        # Instead of delegating to a strategy, it hard-codes a direct payment logic
+        self.payment_method = "credit_card"
+
+    def process_payment(self, amount):
+        # Directly processes payment logic without using a strategy interface
+        if self.payment_method == "credit_card":
+            return self._charge_credit_card(amount)
+        else:
+            return self._charge_other_method(amount)
+
+    def _charge_credit_card(self, amount):
+        # Placeholder direct logic
+        print(f"Charging {amount} to credit card.")
+        return True
+
+    def _charge_other_method(self, amount):
+        # Another hard-coded method
+        print(f"Charging {amount} via alternate method.")
+        return True
+```
+
+{payment_strategy_interface}:
+```python
+from abc import ABC, abstractmethod
+
+class PaymentStrategyInterface(ABC):
+    @abstractmethod
+    def pay(self, amount):
+        pass
+```
+
+[Thinking]
+- The assertion states that all classes in the payment_gateway should use the payment_strategy_interface.
+- The given PaymentGateway class does not appear to reference or delegate to a strategy class.
+- Instead, it hard-codes logic for different payment methods.
+- If the requirement is the use of a strategy interface, this code may not meet that standard.
+- The code might fail the assertion if we expect a strategy pattern but find none implemented.
+
+[Explanation]
+- The `PaymentGateway` does not delegate to any `{payment_strategy_interface}` implementation.
+- Instead of using a strategy class, it hard-codes the payment logic, violating the Strategy pattern requirement.
+- No class in `{payment_gateway}` adheres to the interface or uses it for payment processing.
+````
+
+---
+
+**Now produce new examples for the category ({{.Category}}) following these instructions.**

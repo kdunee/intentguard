@@ -34,6 +34,9 @@ jobs:
       - name: Install dependencies
         run: |
           poetry install --with dev
+      - name: Run prepare script
+        run: |
+          poetry run prepare
       - name: Run ruff check
         run: |
           poetry run ruff check .
@@ -44,8 +47,6 @@ jobs:
         run: |
           poetry run mypy .
       - name: Run tests
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           poetry run python -m unittest discover tests
 
@@ -69,6 +70,9 @@ jobs:
       - name: Install dependencies
         run: |
           poetry install --no-dev
+      - name: Run prepare script
+        run: |
+          poetry run prepare
       - name: Build and publish to PyPI
         run: |
           poetry config pypi-token.pypi ${{ secrets.PYPI_API_TOKEN }}
