@@ -17,7 +17,7 @@
   - Allow referencing files in assertions
   - Handle potentially large files efficiently
 
-- [ ] CPU-Optimized Model (https://github.com/kdunee/intentguard/issues/5)
+- [x] CPU-Optimized Model (https://github.com/kdunee/intentguard/issues/5)
   - Small fine-tuned model focused on local analysis
   - Optimized for CPU execution
   - Faster and cheaper inference

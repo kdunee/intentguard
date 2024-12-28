@@ -7,3 +7,7 @@ poetry.lock
 .cdigestignore
 LICENSE
 ._codebase_digest.txt
+.run
+*.iml*
+.mypy_cache
+.intentguard

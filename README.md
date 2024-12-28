@@ -121,11 +121,15 @@ import intentguard as ig
 
 options = ig.IntentGuardOptions(
     num_evaluations=7,          # Increase number of evaluations
-    model="gpt-4o-2024-08-06",  # Use a more capable model
+    temperature=0.1,            # Lower temperature for more deterministic results
 )
 
 guard = ig.IntentGuard(options)
 ```
+
+## Model
+
+IntentGuard uses a custom 1B model fine-tuned from Llama-3.2-1B-Instruct, optimized specifically for code analysis and verification tasks. The model runs locally using [llamafile](https://github.com/Mozilla-Ocho/llamafile), ensuring privacy and fast inference.
 
 ## Contributing
 
@@ -134,10 +138,6 @@ Contributions are welcome! Check out our [roadmap](ROADMAP.md) for planned featu
 ## License
 
 [MIT License](LICENSE)
-
-## Acknowledgements
-
-This project uses [LiteLLM](https://github.com/BerriAI/litellm) for LLM integration.
 
 ---
 
