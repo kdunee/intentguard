@@ -7,6 +7,9 @@ import re
 import subprocess
 import time
 import os
+import hashlib
+import urllib.request
+from pathlib import Path
 from typing import List, Optional
 
 from intentguard.app.inference_options import InferenceOptions
@@ -22,6 +25,55 @@ INFERENCE_TIMEOUT_SECONDS = 300  # 5 minutes
 CONTEXT_SIZE = 8192
 MODEL_FILENAME = "IntentGuard-1.Q8_0.gguf"
 MODEL_NAME = "IntentGuard-1"
+GGUF_URL = "https://huggingface.co/kdunee/IntentGuard-1/resolve/main/IntentGuard-1.Q8_0.gguf"  # URL for the GGUF file
+GGUF_SHA256 = "0cb9476a129e7fc68b419ab86397b9ce4309b0d5faf6ba5d18629e796ca01383"  # SHA-256 checksum for the GGUF file
+
+MODEL_DIR = Path(".intentguard")
+
+
+def compute_checksum(file_path: Path) -> str:
+    """Compute the SHA-256 checksum of a file."""
+    sha256_hash = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        for byte_block in iter(lambda: f.read(4096), b""):
+            sha256_hash.update(byte_block)
+    return sha256_hash.hexdigest()
+
+
+def verify_checksum(file_path: Path, expected_sha256: str) -> bool:
+    """Verify the SHA-256 checksum of a file."""
+    return compute_checksum(file_path) == expected_sha256
+
+
+def download_file(url: str, target_path: Path, expected_sha256: str):
+    """Download a file and verify its checksum."""
+    print(f"Downloading {url} to {target_path}...")
+
+    # Create parent directories if they don't exist
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Download the file
+    urllib.request.urlretrieve(url, target_path)
+
+    # Verify checksum
+    if not verify_checksum(target_path, expected_sha256):
+        target_path.unlink()  # Delete the file if checksum verification fails
+        raise ValueError(f"Checksum verification failed for {target_path}")
+
+    print(f"Successfully downloaded and verified {target_path}")
+
+
+def ensure_file(url: str, target_path: Path, expected_sha256: str):
+    """Ensure a file exists with the correct checksum."""
+    if target_path.exists():
+        if verify_checksum(target_path, expected_sha256):
+            print(
+                f"{target_path} already exists with correct checksum, skipping download"
+            )
+            return
+        print(f"{target_path} exists but has incorrect checksum, re-downloading")
+        target_path.unlink()
+    download_file(url, target_path, expected_sha256)
 
 
 class Llamafile(InferenceProvider):
@@ -35,34 +87,41 @@ class Llamafile(InferenceProvider):
     The server is automatically started when the class is instantiated and
     listens on a dynamically assigned port on localhost. Requests are made
     using the OpenAI-compatible chat completions API.
+
+    The GGUF model weights are downloaded on-demand when the first inference is requested,
+    if they are not already present in the infrastructure directory.
     """
 
     def __init__(self):
         """
         Initialize and start the Llamafile server.
 
+        Downloads the GGUF model if it's not already present or has an incorrect checksum.
         Launches a local Llamafile server process with the configured model and
         waits for it to start accepting connections. The server port is
         automatically detected from the process output.
 
         Raises:
-            Exception: If the server fails to start or if the port cannot be
-                detected within the startup timeout period.
+            Exception: If the server fails to start, if the port cannot be
+                detected within the startup timeout period, or if the GGUF model
+                download or verification fails.
         """
         self.process: Optional[subprocess.Popen] = None
         self.temp_dir = None
         self.port = None
 
         module_resource = resources.files("intentguard").joinpath("infrastructure")
-        model_path = str(module_resource.joinpath(MODEL_FILENAME))
+        model_path = MODEL_DIR.joinpath(MODEL_FILENAME)
+        llamafile_path = module_resource.joinpath("llamafile.exe")
 
-        llamafile_path = str(module_resource.joinpath("llamafile.exe"))
+        # Ensure GGUF model exists and is valid
+        ensure_file(GGUF_URL, model_path, GGUF_SHA256)
 
         command = [
-            llamafile_path,
+            str(llamafile_path),
             "--server",
             "-m",
-            model_path,
+            str(model_path),
             "-c",
             str(CONTEXT_SIZE),
             "--host",
@@ -74,7 +133,7 @@ class Llamafile(InferenceProvider):
         if system == "Darwin":  # macOS
             # Make llamafile executable on macOS
             try:
-                os.chmod(llamafile_path, 0o755)  # rwxr-xr-x
+                os.chmod(str(llamafile_path), 0o755)  # rwxr-xr-x
                 logger.debug(f"Made llamafile executable at {llamafile_path}")
             except OSError as e:
                 logger.warning(f"Failed to make llamafile executable: {e}")
