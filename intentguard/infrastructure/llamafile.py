@@ -6,6 +6,7 @@ import platform
 import re
 import subprocess
 import time
+import os
 from typing import List, Optional
 
 from intentguard.app.inference_options import InferenceOptions
@@ -69,7 +70,16 @@ class Llamafile(InferenceProvider):
             "--nobrowser",
         ]
 
-        if platform.system() != "Windows":
+        system = platform.system()
+        if system == "Darwin":  # macOS
+            # Make llamafile executable on macOS
+            try:
+                os.chmod(llamafile_path, 0o755)  # rwxr-xr-x
+                logger.debug(f"Made llamafile executable at {llamafile_path}")
+            except OSError as e:
+                logger.warning(f"Failed to make llamafile executable: {e}")
+
+        if system != "Windows":
             # On non-Windows, run in sh
             command.insert(0, "sh")
 

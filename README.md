@@ -133,6 +133,45 @@ IntentGuard uses a custom 1B model fine-tuned from Llama-3.2-1B-Instruct, optimi
 
 ## Contributing
 
+## Local Development Environment Setup
+
+To set up a local development environment for IntentGuard, follow these steps:
+
+1. **Prerequisites:**
+    - Ensure you have Python (version specified in Makefile, currently 3.10) installed on your system.
+    - Install [Poetry](https://python-poetry.org/docs/#installation), a tool for dependency management and packaging in Python.
+
+2. **Clone the repository:**
+   ```bash
+   git clone <repository_url>
+   cd intentguard
+   ```
+
+3. **Install development dependencies:**
+   ```bash
+   make install
+   ```
+   This command uses Poetry to install all necessary development dependencies specified in `pyproject.toml`.
+
+4. **Run tests and checks:**
+   ```bash
+   make test
+   ```
+   This command executes a comprehensive suite of checks including linting, formatting, type checking, and unit tests to ensure code quality.
+
+### Useful development commands:
+
+* `make install`: Installs development dependencies using Poetry.
+* `make install-prod`: Installs only production dependencies.
+* `make prepare`: Runs any necessary preparation scripts (if defined).
+* `make check`: Runs `ruff check` for linting.
+* `make format-check`: Runs `ruff format --check` to check code formatting.
+* `make mypy`: Runs `mypy` for static type checking.
+* `make unittest`: Runs Python's built-in unittest framework.
+* `make test`: Runs all checks and tests (linting, formatting, type checking, unit tests).
+* `make clean`: Removes the virtual environment to start fresh.
+* `make help`: Shows a list of available `make` commands and their descriptions.
+
 Contributions are welcome! Check out our [roadmap](ROADMAP.md) for planned features.
 
 ## License

@@ -10,3 +10,4 @@ __pycache__
 /.run
 llama.log
 /dist
+.DS_Store

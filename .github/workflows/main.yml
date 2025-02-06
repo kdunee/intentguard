@@ -31,24 +31,8 @@ jobs:
           key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
           restore-keys: |
             ${{ runner.os }}-poetry-
-      - name: Install dependencies
-        run: |
-          poetry install --with dev
-      - name: Run prepare script
-        run: |
-          poetry run prepare
-      - name: Run ruff check
-        run: |
-          poetry run ruff check .
-      - name: Run ruff format check
-        run: |
-          poetry run ruff format --check .
-      - name: Run mypy check
-        run: |
-          poetry run mypy .
-      - name: Run tests
-        run: |
-          poetry run python -m unittest discover tests
+      - name: Run Make test
+        run: make test
 
   publish:
     needs: [test]
@@ -67,13 +51,7 @@ jobs:
           virtualenvs-in-project: true
           virtualenvs-path: .venv
           installer-parallel: true
-      - name: Install dependencies
-        run: |
-          poetry install --no-dev
-      - name: Run prepare script
-        run: |
-          poetry run prepare
-      - name: Build and publish to PyPI
-        run: |
-          poetry config pypi-token.pypi ${{ secrets.PYPI_API_TOKEN }}
-          poetry publish --build
+      - name: Run Make publish
+        run: make publish
+        env:
+          PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
