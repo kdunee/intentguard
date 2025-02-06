@@ -13,7 +13,6 @@ classifiers = [
     "Topic :: Software Development :: Testing",
 ]
 include = [
-    "intentguard/infrastructure/*.gguf",
     "intentguard/infrastructure/llamafile.exe"
 ]
 exclude = [
@@ -30,6 +29,7 @@ exclude = [
     "*.iml",
     "__pycache__",
     ".mypy_cache",
+    "*.gguf",
 ]
 
 [tool.poetry.dependencies]

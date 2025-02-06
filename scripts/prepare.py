@@ -1,16 +1,12 @@
-import hashlib
 import sys
+import hashlib
 import urllib.request
 from pathlib import Path
 
 INFRASTRUCTURE_DIR = Path(__file__).parent.parent / "intentguard" / "infrastructure"
 
-# These will be provided later
 LLAMAFILE_URL = "https://github.com/Mozilla-Ocho/llamafile/releases/download/0.8.17/llamafile-0.8.17"  # URL for llamafile
 LLAMAFILE_SHA256 = "1041e05b2c254674e03c66052b1a6cf646e8b15ebd29a195c77fed92cac60d6b"  # SHA-256 checksum for llamafile
-
-GGUF_URL = "https://huggingface.co/kdunee/IntentGuard-1/resolve/main/IntentGuard-1.Q8_0.gguf"  # URL for the GGUF file
-GGUF_SHA256 = "0cb9476a129e7fc68b419ab86397b9ce4309b0d5faf6ba5d18629e796ca01383"  # SHA-256 checksum for the GGUF file
 
 
 def compute_checksum(file_path: Path) -> str:
@@ -60,18 +56,10 @@ def ensure_file(url: str, target_path: Path, expected_sha256: str):
 
 def main():
     """Main entry point for the prepare script."""
-    if not LLAMAFILE_URL or not GGUF_URL:
-        print("Error: URLs have not been configured.", file=sys.stderr)
-        sys.exit(1)
-
     try:
         # Download llamafile.exe
         llamafile_path = INFRASTRUCTURE_DIR / "llamafile.exe"
         ensure_file(LLAMAFILE_URL, llamafile_path, LLAMAFILE_SHA256)
-
-        # Download GGUF file
-        gguf_path = INFRASTRUCTURE_DIR / "IntentGuard-1.Q8_0.gguf"
-        ensure_file(GGUF_URL, gguf_path, GGUF_SHA256)
 
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
