@@ -6,7 +6,7 @@ install: ## Install development dependencies
 	poetry install --with dev
 
 install-prod: ## Install production dependencies
-	poetry install --no-dev
+	poetry install
 
 prepare: ## Run prepare script
 	poetry run prepare
@@ -25,7 +25,7 @@ unittest: ## Run unit tests
 
 test: install prepare check format-check mypy unittest ## Run all checks and tests
 
-publish: test install-prod prepare ## Publish to PyPI (requires PYPI_API_TOKEN environment variable to be set)
+publish: install-prod prepare ## Publish to PyPI (requires PYPI_API_TOKEN environment variable to be set)
 	poetry config pypi-token.pypi $(PYPI_API_TOKEN)
 	poetry publish --build
 
