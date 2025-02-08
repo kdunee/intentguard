@@ -163,7 +163,6 @@ To set up a local development environment for IntentGuard, follow these steps:
 
 * `make install`: Installs development dependencies using Poetry.
 * `make install-prod`: Installs only production dependencies.
-* `make prepare`: Runs any necessary preparation scripts (if defined).
 * `make check`: Runs `ruff check` for linting.
 * `make format-check`: Runs `ruff format --check` to check code formatting.
 * `make mypy`: Runs `mypy` for static type checking.

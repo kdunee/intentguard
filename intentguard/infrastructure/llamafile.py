@@ -1,5 +1,4 @@
 import http.client
-import importlib.resources as resources
 import json
 import logging
 import platform
@@ -25,10 +24,12 @@ INFERENCE_TIMEOUT_SECONDS = 300  # 5 minutes
 CONTEXT_SIZE = 8192
 MODEL_FILENAME = "IntentGuard-1.Q8_0.gguf"
 MODEL_NAME = "IntentGuard-1"
+LLAMAFILE_URL = "https://github.com/Mozilla-Ocho/llamafile/releases/download/0.8.17/llamafile-0.8.17"  # URL for llamafile
+LLAMAFILE_SHA256 = "1041e05b2c254674e03c66052b1a6cf646e8b15ebd29a195c77fed92cac60d6b"  # SHA-256 checksum for llamafile
 GGUF_URL = "https://huggingface.co/kdunee/IntentGuard-1/resolve/main/IntentGuard-1.Q8_0.gguf"  # URL for the GGUF file
 GGUF_SHA256 = "0cb9476a129e7fc68b419ab86397b9ce4309b0d5faf6ba5d18629e796ca01383"  # SHA-256 checksum for the GGUF file
 
-MODEL_DIR = Path(".intentguard")
+STORAGE_DIR = Path(".intentguard")
 
 
 def compute_checksum(file_path: Path) -> str:
@@ -110,11 +111,10 @@ class Llamafile(InferenceProvider):
         self.temp_dir = None
         self.port = None
 
-        module_resource = resources.files("intentguard").joinpath("infrastructure")
-        model_path = MODEL_DIR.joinpath(MODEL_FILENAME)
-        llamafile_path = module_resource.joinpath("llamafile.exe")
+        model_path = STORAGE_DIR.joinpath(MODEL_FILENAME)
+        llamafile_path = STORAGE_DIR.joinpath("llamafile.exe")
 
-        # Ensure GGUF model exists and is valid
+        ensure_file(LLAMAFILE_URL, llamafile_path, LLAMAFILE_SHA256)
         ensure_file(GGUF_URL, model_path, GGUF_SHA256)
 
         command = [

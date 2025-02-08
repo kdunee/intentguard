@@ -1,15 +1,12 @@
 PYTHON_VERSION ?= 3.10
 
-.PHONY: install install-prod prepare check format-check mypy unittest test publish all clean help
+.PHONY: install install-prod check format-check mypy unittest test publish all clean help
 
 install: ## Install development dependencies
 	poetry install --with dev
 
 install-prod: ## Install production dependencies
 	poetry install
-
-prepare: ## Run prepare script
-	poetry run prepare
 
 check: ## Run ruff check
 	poetry run ruff check .
@@ -23,9 +20,9 @@ mypy: ## Run mypy check
 unittest: ## Run unit tests
 	poetry run python -m unittest discover tests
 
-test: install prepare check format-check mypy unittest ## Run all checks and tests
+test: install check format-check mypy unittest ## Run all checks and tests
 
-publish: install-prod prepare ## Publish to PyPI (requires PYPI_API_TOKEN environment variable to be set)
+publish: install-prod ## Publish to PyPI (requires PYPI_API_TOKEN environment variable to be set)
 	poetry config pypi-token.pypi $(PYPI_API_TOKEN)
 	poetry publish --build
 

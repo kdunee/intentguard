@@ -12,31 +12,9 @@ classifiers = [
     "Topic :: Software Development :: Quality Assurance",
     "Topic :: Software Development :: Testing",
 ]
-include = [
-    "intentguard/infrastructure/llamafile.exe"
-]
-exclude = [
-    ".github",
-    ".idea",
-    ".intentguard",
-    ".run",
-    "ai_research",
-    "scripts",
-    "design",
-    "dist",
-    "tests",
-    "._codebase_digest.txt",
-    "*.iml",
-    "__pycache__",
-    ".mypy_cache",
-    "*.gguf",
-]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-
-[tool.poetry.scripts]
-prepare = "scripts.prepare:main"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.6.9"
