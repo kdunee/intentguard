@@ -1,3 +1,7 @@
+<div align="center">
+    <img alt="intentguard" height="200px" src="./design/logomark-256.png">
+</div>
+
 # IntentGuard
 
 ![GitHub Sponsors](https://img.shields.io/github/sponsors/kdunee)

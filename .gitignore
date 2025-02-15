@@ -3,7 +3,6 @@
 __pycache__
 .intentguard
 .mypy_cache
-/design
 ._codebase_digest.txt
 /.idea
 *.iml
@@ -11,3 +10,4 @@ __pycache__
 llama.log
 /dist
 .DS_Store
+/.vscode
