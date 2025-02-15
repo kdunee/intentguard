@@ -149,7 +149,7 @@ guard = ig.IntentGuard(options)
 
 ## Model
 
-IntentGuard utilizes a custom 1B parameter model, fine-tuned from Llama-3.2-1B-Instruct. This model is optimized for code analysis and verification and runs locally using [llamafile](https://github.com/Mozilla-Ocho/llamafile) for privacy and efficient inference.
+IntentGuard utilizes [a custom 1B parameter model](https://huggingface.co/kdunee/IntentGuard-1), fine-tuned from Llama-3.2-1B-Instruct. This model is optimized for code analysis and verification and runs locally using [llamafile](https://github.com/Mozilla-Ocho/llamafile) for privacy and efficient inference.
 
 ## Local Development Environment Setup
 
