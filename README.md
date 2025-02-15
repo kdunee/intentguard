@@ -7,64 +7,82 @@
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/intentguard)
 
 
-IntentGuard is a Python library for verifying code properties using natural language assertions. It seamlessly integrates with popular testing frameworks like pytest and unittest, allowing developers to express complex code expectations in plain English while maintaining the structure of traditional test suites.
+IntentGuard is a Python library for verifying code properties using natural language assertions. It integrates with testing frameworks like pytest and unittest, allowing you to express complex code expectations in plain English within your existing test suites.
 
 ## Why IntentGuard?
 
-Traditional testing approaches often require extensive boilerplate code to verify complex properties. IntentGuard bridges this gap by allowing developers to express sophisticated test cases in natural language, particularly useful for scenarios where writing conventional test code would be impractical or time-consuming.
+Traditional code testing often requires writing extensive code to verify intricate properties. IntentGuard simplifies this by enabling you to express sophisticated test cases in natural language. This is particularly useful when writing conventional test code becomes impractical or overly complex.
+
+**Key Use Cases:**
+
+* **Complex Property Verification:** Test intricate code behaviors that are hard to assert with standard methods.
+* **Reduced Boilerplate:**  Avoid writing lengthy test code for advanced checks.
+* **Improved Readability:** Natural language assertions make tests easier to understand, especially for complex logic.
 
 ### Key Features
 
-1. **Natural Language Test Cases:** Write test assertions in plain English.
-2. **Framework Integration:** Works with pytest, unittest, and other testing frameworks.
-3. **Deterministic Results:** Uses a voting mechanism and controlled sampling for consistent results.
-4. **Flexible Verification:** Test complex code properties that would be difficult to verify traditionally.
-5. **Detailed Failure Explanations:** Provides clear explanations when assertions fail, helping you understand the root cause and fix issues faster.
-6. **Efficient Result Caching:** Caches assertion results to avoid redundant processing and speed up test execution.
+1. **Natural Language Assertions:** Write test assertions in plain English.
+2. **Testing Framework Integration:** Works seamlessly with pytest and unittest.
+3. **Deterministic Results:** Employs a voting mechanism and controlled sampling for consistent test outcomes.
+4. **Flexible Verification:** Test properties difficult to verify using traditional techniques.
+5. **Detailed Failure Explanations:** Provides clear, natural language explanations when assertions fail.
+6. **Efficient Result Caching:** Caches results to speed up test execution and avoid redundant evaluations.
 
 ## When to Use IntentGuard
 
-IntentGuard is designed for scenarios where traditional test implementation would be impractical or require excessive code. For example:
+IntentGuard is ideal when implementing traditional tests for certain code properties is challenging or requires excessive code. Consider these scenarios:
 
 ```python
-# Traditional approach would require:
-# 1. Iterating through all methods
-# 2. Parsing AST for each method
-# 3. Checking exception handling patterns
-# 4. Verifying logging calls
-# 5. Maintaining complex test code
+# Example 1: Error Handling Verification
 
-# With IntentGuard:
 def test_error_handling():
     ig.assert_code(
         "All methods in {module} should use the custom ErrorHandler class for exception management, and log errors before re-raising them",
         {"module": my_critical_module}
     )
 
-# Another example - checking documentation consistency
+
+# Example 2: Documentation Consistency Check
+
 def test_docstring_completeness():
     ig.assert_code(
         "All public methods in {module} should have docstrings that include Parameters, Returns, and Examples sections",
         {"module": my_api_module}
     )
-```
+````
 
-## How It Works
+In these examples, manually writing tests to iterate through methods, parse AST, and check for specific patterns would be significantly more complex than using IntentGuard's natural language assertions.
 
-### Deterministic Testing
+## How It Works: Deterministic Testing
 
-IntentGuard employs several mechanisms to ensure consistent and reliable results:
+IntentGuard ensures reliable results through these mechanisms:
 
-1. **Voting Mechanism**: Each assertion is evaluated multiple times (configurable through `num_evaluations`), and the majority result is used
-2. **Temperature Control**: Uses low temperature for LLM sampling to reduce randomness
-3. **Structured Prompts**: Converts natural language assertions into structured prompts for consistent LLM interpretation
+1.  **Voting Mechanism:** Each assertion is evaluated multiple times (configurable via `num_evaluations`), and the majority result determines the outcome.
+2.  **Temperature Control:** Low temperature sampling in the LLM minimizes randomness.
+3.  **Structured Prompts:** Natural language assertions are converted into structured prompts for consistent LLM interpretation.
+
+You can configure determinism settings:
 
 ```python
-# Configure determinism settings
 options = IntentGuardOptions(
     num_evaluations=5,      # Number of evaluations per assertion
 )
 ```
+
+## Compatibility
+
+IntentGuard is compatible with:
+
+  * **Python:** 3.10+
+  * **Operating Systems:**
+      * Linux 2.6.18+ (most distributions since \~2007)
+      * Darwin (macOS) 23.1.0+ (GPU support only on ARM64)
+      * Windows 10+ (AMD64 only)
+      * FreeBSD 13+
+      * NetBSD 9.2+ (AMD64 only)
+      * OpenBSD 7+ (AMD64 only)
+
+These OS and architecture compatibilities are inherited from [llamafile](https://github.com/Mozilla-Ocho/llamafile), which IntentGuard uses to run the model locally.
 
 ## Installation
 
@@ -81,13 +99,13 @@ import intentguard as ig
 
 def test_code_properties():
     guard = ig.IntentGuard()
-    
+
     # Test code organization
     guard.assert_code(
         "Classes in {module} should follow the Single Responsibility Principle",
         {"module": my_module}
     )
-    
+
     # Test security practices
     guard.assert_code(
         "All database queries in {module} should be parameterized to prevent SQL injection",
@@ -104,7 +122,7 @@ import intentguard as ig
 class TestCodeQuality(unittest.TestCase):
     def setUp(self):
         self.guard = ig.IntentGuard()
-    
+
     def test_error_handling(self):
         self.guard.assert_code(
             "All API endpoints in {module} should have proper input validation",
@@ -112,9 +130,7 @@ class TestCodeQuality(unittest.TestCase):
         )
 ```
 
-## Advanced Usage
-
-### Custom Evaluation Options
+## Advanced Usage: Custom Evaluation Options
 
 ```python
 import intentguard as ig
@@ -129,54 +145,35 @@ guard = ig.IntentGuard(options)
 
 ## Model
 
-IntentGuard uses a custom 1B model fine-tuned from Llama-3.2-1B-Instruct, optimized specifically for code analysis and verification tasks. The model runs locally using [llamafile](https://github.com/Mozilla-Ocho/llamafile), ensuring privacy and fast inference.
-
-## Contributing
+IntentGuard utilizes a custom 1B parameter model, fine-tuned from Llama-3.2-1B-Instruct. This model is optimized for code analysis and verification and runs locally using [llamafile](https://github.com/Mozilla-Ocho/llamafile) for privacy and efficient inference.
 
 ## Local Development Environment Setup
 
-To set up a local development environment for IntentGuard, follow these steps:
+To contribute to IntentGuard, set up your local environment:
 
-1. **Prerequisites:**
-    - Ensure you have Python (version specified in Makefile, currently 3.10) installed on your system.
-    - Install [Poetry](https://python-poetry.org/docs/#installation), a tool for dependency management and packaging in Python.
+1.  **Prerequisites:** Python 3.10+, [Poetry](https://python-poetry.org/docs/#installation).
+2.  **Clone:** `git clone <repository_url> && cd intentguard`
+3.  **Install dev dependencies:** `make install`
+4.  **Run tests & checks:** `make test`
 
-2. **Clone the repository:**
-   ```bash
-   git clone <repository_url>
-   cd intentguard
-   ```
-
-3. **Install development dependencies:**
-   ```bash
-   make install
-   ```
-   This command uses Poetry to install all necessary development dependencies specified in `pyproject.toml`.
-
-4. **Run tests and checks:**
-   ```bash
-   make test
-   ```
-   This command executes a comprehensive suite of checks including linting, formatting, type checking, and unit tests to ensure code quality.
+Refer to the `Makefile` for more development commands.
 
 ### Useful development commands:
 
-* `make install`: Installs development dependencies using Poetry.
-* `make install-prod`: Installs only production dependencies.
-* `make check`: Runs `ruff check` for linting.
-* `make format-check`: Runs `ruff format --check` to check code formatting.
-* `make mypy`: Runs `mypy` for static type checking.
-* `make unittest`: Runs Python's built-in unittest framework.
-* `make test`: Runs all checks and tests (linting, formatting, type checking, unit tests).
-* `make clean`: Removes the virtual environment to start fresh.
-* `make help`: Shows a list of available `make` commands and their descriptions.
-
-Contributions are welcome! Check out our [roadmap](ROADMAP.md) for planned features.
+  * `make install`: Installs development dependencies.
+  * `make install-prod`: Installs production dependencies only.
+  * `make check`: Runs linting checks (`ruff check`).
+  * `make format-check`: Checks code formatting (`ruff format --check`).
+  * `make mypy`: Runs static type checking (`mypy`).
+  * `make unittest`: Runs unit tests.
+  * `make test`: Runs all checks and tests.
+  * `make clean`: Removes the virtual environment.
+  * `make help`: Lists available `make` commands.
 
 ## License
 
 [MIT License](LICENSE)
 
----
+-----
 
-IntentGuard is designed to complement, not replace, traditional testing approaches. It's most effective when used for complex code properties that are difficult to verify through conventional means.
+IntentGuard is a complementary tool for specific testing needs, not a replacement for traditional testing. It is most effective for verifying complex code properties that are difficult to test conventionally.
