@@ -1,5 +1,5 @@
 <div align="center">
-    <img alt="intentguard" height="200px" src="./design/logomark-256.png">
+    <img alt="intentguard" height="200px" src="https://raw.githubusercontent.com/kdunee/intentguard/refs/heads/main/design/logomark-256.png">
 </div>
 
 # IntentGuard
