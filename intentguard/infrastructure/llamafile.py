@@ -9,7 +9,9 @@ import os
 import hashlib
 import urllib.request
 from pathlib import Path
-from typing import List, Optional
+from typing import List
+import threading
+import atexit
 
 from intentguard.app.inference_options import InferenceOptions
 from intentguard.app.inference_provider import InferenceProvider
@@ -85,100 +87,121 @@ class Llamafile(InferenceProvider):
     inferences. It handles server startup, communication via HTTP, and response
     parsing. The server uses a quantized GGUF model optimized for code evaluation.
 
-    The server is automatically started when the class is instantiated and
-    listens on a dynamically assigned port on localhost. Requests are made
+    The server is lazily initialized when the first inference is requested,
+    and listens on a dynamically assigned port on localhost. Requests are made
     using the OpenAI-compatible chat completions API.
 
-    The GGUF model weights are downloaded on-demand when the first inference is requested,
-    if they are not already present in the infrastructure directory.
+    The GGUF model weights and server binary are downloaded on-demand when the
+    first inference is requested, if they are not already present in the
+    infrastructure directory.
     """
 
     def __init__(self):
         """
-        Initialize and start the Llamafile server.
+        Initialize the Llamafile provider.
 
-        Downloads the GGUF model if it's not already present or has an incorrect checksum.
-        Launches a local Llamafile server process with the configured model and
-        waits for it to start accepting connections. The server port is
-        automatically detected from the process output.
+        The actual server process and required files are initialized lazily
+        when the first prediction is requested. This constructor only sets up
+        the basic instance attributes and threading lock.
+        """
+        self._process = None
+        self._port = None
+        self._process_lock = threading.Lock()
+        atexit.register(self.shutdown)
+
+    def shutdown(self):
+        """Shutdown the Llamafile server process in a thread-safe manner."""
+        with self._process_lock:
+            if self._process is not None:
+                try:
+                    if self._process.poll() is None:  # process is still running
+                        self._process.kill()
+                        logger.debug("Killed llamafile server process")
+                except Exception as e:
+                    logger.warning("Failed to kill llamafile server process: %s", e)
+                self._process = None
+                self._port = None
+
+    def _ensure_process(self):
+        """
+        Ensure the Llamafile server process is running.
+
+        Downloads required files if not present and starts the server process
+        if it hasn't been started yet. This method is thread-safe and handles
+        concurrent initialization attempts.
 
         Raises:
             Exception: If the server fails to start, if the port cannot be
-                detected within the startup timeout period, or if the GGUF model
-                download or verification fails.
+                detected within the startup timeout period, or if file downloads
+                or verification fail.
         """
-        self.process: Optional[subprocess.Popen] = None
-        self.temp_dir = None
-        self.port = None
+        if self._process is not None:
+            return
 
-        model_path = STORAGE_DIR.joinpath(MODEL_FILENAME)
-        llamafile_path = STORAGE_DIR.joinpath("llamafile.exe")
+        with self._process_lock:
+            if self._process is not None:
+                return
 
-        ensure_file(LLAMAFILE_URL, llamafile_path, LLAMAFILE_SHA256)
-        ensure_file(GGUF_URL, model_path, GGUF_SHA256)
+            model_path = STORAGE_DIR.joinpath(MODEL_FILENAME)
+            llamafile_path = STORAGE_DIR.joinpath("llamafile.exe")
 
-        command = [
-            str(llamafile_path),
-            "--server",
-            "-m",
-            str(model_path),
-            "-c",
-            str(CONTEXT_SIZE),
-            "--host",
-            "127.0.0.1",
-            "--nobrowser",
-        ]
+            ensure_file(LLAMAFILE_URL, llamafile_path, LLAMAFILE_SHA256)
+            ensure_file(GGUF_URL, model_path, GGUF_SHA256)
 
-        system = platform.system()
-        if system != "Windows":
-            # On non-Windows, make llamafile executable, and run in sh
-            try:
-                os.chmod(str(llamafile_path), 0o755)  # rwxr-xr-x
-                logger.debug(f"Made llamafile executable at {llamafile_path}")
-            except OSError as e:
-                logger.warning(f"Failed to make llamafile executable: {e}")
-            command.insert(0, "sh")
+            command = [
+                str(llamafile_path),
+                "--server",
+                "-m",
+                str(model_path),
+                "-c",
+                str(CONTEXT_SIZE),
+                "--host",
+                "127.0.0.1",
+                "--nobrowser",
+            ]
 
-        self.process = subprocess.Popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-        )
+            system = platform.system()
+            if system != "Windows":
+                try:
+                    os.chmod(str(llamafile_path), 0o755)
+                    logger.debug(f"Made llamafile executable at {llamafile_path}")
+                except OSError as e:
+                    logger.warning(f"Failed to make llamafile executable: {e}")
+                command.insert(0, "sh")
 
-        start_time = time.time()
-        while time.time() - start_time < STARTUP_TIMEOUT_SECONDS:
-            line = self.process.stderr.readline()
-            if not line:
-                if self.process.poll() is not None:
-                    break
-                continue
-            match = re.search(r"llama server listening at http://127.0.0.1:(\d+)", line)
-            if match:
-                self.port = int(match.group(1))
-                break
+            self._process = subprocess.Popen(
+                command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
 
-        if not self.port:
-            status = self.process.poll()
-            if status is not None:
-                logger.error("Llamafile server failed to start with status %d", status)
-                raise Exception(f"llamafile exited with status {status}")
-            else:
-                logger.error(
-                    "Could not detect Llamafile server port within timeout period"
+            start_time = time.time()
+            while time.time() - start_time < STARTUP_TIMEOUT_SECONDS:
+                line = self._process.stderr.readline()
+                if not line:
+                    if self._process.poll() is not None:
+                        break
+                    continue
+                match = re.search(
+                    r"llama server listening at http://127.0.0.1:(\d+)", line
                 )
-                self.process.kill()
-                raise Exception("Could not find port in llamafile output")
+                if match:
+                    self._port = int(match.group(1))
+                    break
 
-        logger.info("Llamafile server started successfully on port %d", self.port)
+            if not self._port:
+                status = self._process.poll()
+                if status is not None:
+                    logger.error(
+                        "Llamafile server failed to start with status %d", status
+                    )
+                    raise Exception(f"llamafile exited with status {status}")
+                else:
+                    logger.error(
+                        "Could not detect Llamafile server port within timeout period"
+                    )
+                    self._process.kill()
+                    raise Exception("Could not find port in llamafile output")
 
-    def __del__(self):
-        """Clean up resources when the instance is destroyed."""
-        # Kill the subprocess if it's still running
-        if self.process is not None:
-            try:
-                if self.process.poll() is None:  # process is still running
-                    self.process.kill()
-                    logger.debug("Killed llamafile server process")
-            except Exception as e:
-                logger.warning("Failed to kill llamafile server process: %s", e)
+            logger.info("Llamafile server started successfully on port %d", self._port)
 
     def predict(
         self, prompt: List[Message], inference_options: InferenceOptions
@@ -186,10 +209,10 @@ class Llamafile(InferenceProvider):
         """
         Generate a prediction using the Llamafile server.
 
-        Makes an HTTP request to the local server's chat completions endpoint,
-        formatting the input according to the OpenAI API specification. The
-        response is expected to be a JSON object containing a result and
-        optional explanation.
+        Ensures the server is running (starting it if necessary) and makes an HTTP
+        request to the local server's chat completions endpoint, formatting the
+        input according to the OpenAI API specification. The response is expected
+        to be a JSON object containing a result and optional explanation.
 
         Args:
             prompt: List of messages forming the input prompt
@@ -199,9 +222,10 @@ class Llamafile(InferenceProvider):
             An Evaluation object containing the model's assessment
 
         Raises:
-            Exception: If the server returns an error, if the response cannot
-                be parsed, or if the request times out
+            Exception: If the server fails to start, returns an error, if the
+                response cannot be parsed, or if the request times out
         """
+        self._ensure_process()
         logger.debug(
             "Preparing prediction request with temperature %.2f",
             inference_options.temperature,
@@ -214,7 +238,7 @@ class Llamafile(InferenceProvider):
         }
 
         conn = http.client.HTTPConnection(
-            "127.0.0.1", self.port, timeout=INFERENCE_TIMEOUT_SECONDS
+            "127.0.0.1", self._port, timeout=INFERENCE_TIMEOUT_SECONDS
         )
         try:
             conn.request(
