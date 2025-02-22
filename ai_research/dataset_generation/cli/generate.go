@@ -34,7 +34,7 @@ var generateCmd = &cobra.Command{
 
 		ctx := context.Background()
 
-		template, err := infrastructure.GetPrompt()
+		template, err := infrastructure.GetGenerationPrompt()
 		if err != nil {
 			log.Fatalf("Failed to get prompt: %v", err)
 		}

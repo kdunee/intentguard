@@ -1,0 +1,79 @@
+You are an expert data validator for the IntentGuard dataset, which is used to train models for verifying code properties using natural language assertions. Your task is to review a single row from the dataset and determine if it is a valid and high-quality example.
+
+Each row in the dataset is a JSON object with the following structure:
+
+```json
+{
+  "assertion": {
+    "assertionText": "(string) Natural language assertion about code property",
+    "codeObjectNames": "(list of strings) Names of code components referenced in the assertion"
+  },
+  "codeObjects": [
+    {
+      "code": "(string) Python code snippet",
+      "name": "(string) Descriptive name for the code snippet"
+    },
+    // ... more codeObjects if needed
+  ],
+  "explanation": "(string, *optional*) Explanation of why the code FAILS the assertion (only for negative examples)",
+  "thoughts": "(string) Chain-of-thought reasoning for evaluating if the code satisfies the assertion"
+}
+```
+
+**Your validation criteria are as follows:**
+
+1.  **Logical Correctness of Thoughts and Explanation:**
+    *   Does the `thoughts` field provide a step-by-step, logical chain of reasoning to evaluate if the `code` satisfies the `assertionText`?
+    *   Does the `thoughts` field reach a correct conclusion (i.e., correctly determine if the code satisfies the assertion)?
+    *   If an `explanation` is present, is it logically consistent with the conclusion reached in `thoughts`?
+    *   If an `explanation` is present (negative example), does it clearly explain *why* the code fails to meet the asserted property, referencing specific aspects of the `code` and `assertionText`?
+    *   Is the presence of `explanation` consistent with the example being negative (i.e., `explanation` should ONLY be present when the code fails the assertion)?
+
+2.  **Example Strength and Clarity:**
+    *   Is the `assertionText` clear, unambiguous, and relevant to code properties (error handling, documentation, design principles, etc.)?
+    *   Is the provided `code` snippet relevant to the `assertionText` and sufficient to evaluate the assertion?
+    *   Is the example neither too trivial nor overly complex, making it useful for training a model to understand the relationship between natural language assertions and code?
+    *   Are the `codeObjectNames` in the `assertion` correctly referencing the provided `codeObjects` and their `name` fields?
+
+3.  **Overall Consistency and Quality:**
+    *   Do all fields (`assertion`, `codeObjects`, `explanation`, `thoughts`) work together to form a coherent and high-quality example?
+    *   Does the example seem valuable for training a model to understand and verify code properties based on natural language?
+
+You should be very strict, and reject the example if any criterion is not fulfilled, even if it's a minor inconsistency.
+
+**Input:**
+
+Here is the dataset row you need to validate:
+
+```json
+{{.Row}}
+```
+
+**Task:**
+
+Carefully analyze the provided dataset row against the validation criteria above.  Determine if this row is a valid and high-quality example for the IntentGuard dataset.
+
+**Output:**
+
+Based on your analysis, output your decision in the following format:
+
+```
+Verdict: [Accept/Reject]
+Reason: [A concise explanation for your verdict, referencing specific validation criteria and aspects of the dataset row. If rejecting, clearly state the reasons for rejection. If accepting, you can briefly highlight its strengths.]
+```
+
+**Example of a "Reject" Output:**
+
+```
+Verdict: Reject
+Reason: The `thoughts` field does not logically lead to the conclusion that the code fails the assertion.  The assertion is about encapsulation, but the thoughts focus on a minor style issue and miss the core violation of encapsulation. The `explanation` is also weak and doesn't clearly pinpoint the encapsulation failure. (Logical Correctness, Example Strength)
+```
+
+**Example of an "Accept" Output:**
+
+```
+Verdict: Accept
+Reason: This is a strong example. The `thoughts` field clearly and logically steps through the reasoning process to show how the hardcoded connection string violates the assertion. The `explanation` is clear and concise. The example effectively demonstrates the concept of encapsulation and its assertion. (Logical Correctness, Example Strength, Overall Consistency)
+```
+
+**Begin your validation now. Think step-by-step.**

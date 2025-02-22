@@ -1,20 +1,7 @@
-import torch
-import jinja2
 import json
-from datasets import load_dataset
-from trl import SFTTrainer
-from transformers import TrainingArguments, DataCollatorForSeq2Seq
-from unsloth import FastLanguageModel, is_bfloat16_supported
-from unsloth.chat_templates import get_chat_template, train_on_responses_only
 
-# Constants
-MAX_SEQ_LENGTH = 32768
-DTYPE = None
-LOAD_IN_4BIT = True
-OUTPUT_DIR = "outputs"
-LORA_OUTPUT_DIR = "lora_model"
-GGUF_OUTPUT_DIR = "model"
-GGUF_QUANTIZATION_METHOD = "q4_k_m"
+import jinja2
+from datasets import load_dataset
 
 SYSTEM_PROMPT = """You are a code analysis assistant. Your task is to analyze Python code against a natural language assertion and determine if the code fulfills the assertion.
 
@@ -199,69 +186,11 @@ def formatting_prompts_func(example):
     )
     rendered_output = generate_output(thoughts, result, explanation)
 
-    convo = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": rendered_input},
-        {"role": "assistant", "content": rendered_output},
-    ]
-
-    text = tokenizer.apply_chat_template(
-        convo, tokenize=False, add_generation_prompt=False
-    )
-
-    return {"text": text, "convo": convo}
-
-
-def load_model_and_tokenizer(model_name, max_seq_length, dtype, load_in_4bit):
-    model, tokenizer = FastLanguageModel.from_pretrained(
-        model_name=model_name,
-        max_seq_length=max_seq_length,
-        dtype=dtype,
-        load_in_4bit=load_in_4bit,
-    )
-    return model, tokenizer
-
-
-def apply_lora_adapters(
-    model,
-    r=16,
-    lora_alpha=16,
-    lora_dropout=0,
-    bias="none",
-    use_gradient_checkpointing="unsloth",
-    random_state=3407,
-    use_rslora=False,
-    loftq_config=None,
-):
-    model = FastLanguageModel.get_peft_model(
-        model,
-        r=r,
-        target_modules=[
-            "q_proj",
-            "k_proj",
-            "v_proj",
-            "o_proj",
-            "gate_proj",
-            "up_proj",
-            "down_proj",
-        ],
-        lora_alpha=lora_alpha,
-        lora_dropout=lora_dropout,
-        bias=bias,
-        use_gradient_checkpointing=use_gradient_checkpointing,
-        random_state=random_state,
-        use_rslora=use_rslora,
-        loftq_config=loftq_config,
-    )
-    return model
-
-
-def get_chat_template_func(tokenizer, chat_template="llama-3.1"):
-    tokenizer = get_chat_template(
-        tokenizer,
-        chat_template=chat_template,
-    )
-    return tokenizer
+    return {
+        "instruction": SYSTEM_PROMPT,
+        "input": rendered_input,
+        "output": rendered_output,
+    }
 
 
 def load_and_map_datasets():
@@ -271,136 +200,25 @@ def load_and_map_datasets():
     dataset_train = dataset_train.map(
         formatting_prompts_func,
         batched=False,
+        remove_columns=["assertion", "codeObjects", "thoughts", "explanation"],
     )
     dataset_test = dataset_test.map(
         formatting_prompts_func,
         batched=False,
+        remove_columns=["assertion", "codeObjects", "thoughts", "explanation"],
     )
     return dataset_train, dataset_test
 
 
-def initialize_trainer(model, tokenizer, dataset_train, max_seq_length, output_dir):
-    trainer = SFTTrainer(
-        model=model,
-        tokenizer=tokenizer,
-        train_dataset=dataset_train,
-        dataset_text_field="text",
-        max_seq_length=max_seq_length,
-        data_collator=DataCollatorForSeq2Seq(tokenizer=tokenizer),
-        dataset_num_proc=2,
-        packing=False,
-        args=TrainingArguments(
-            per_device_train_batch_size=2,
-            gradient_accumulation_steps=4,
-            warmup_steps=5,
-            num_train_epochs=3,
-            learning_rate=2e-4,
-            fp16=not is_bfloat16_supported(),
-            bf16=is_bfloat16_supported(),
-            logging_steps=1,
-            optim="adamw_8bit",
-            weight_decay=0.01,
-            lr_scheduler_type="linear",
-            seed=3407,
-            output_dir=output_dir,
-            report_to="none",
-        ),
+def main():
+    dataset_train, dataset_test = load_and_map_datasets()
+    dataset_train.to_json(
+        "data/train.json", lines=False, orient="records", batch_size=1_000_000
     )
-    return trainer
-
-
-def train_on_completions_only_func(
-    trainer,
-    instruction_part="<|start_header_id|>user<|end_header_id|>\n\n",
-    response_part="<|start_header_id|>assistant<|end_header_id|>\n\n",
-):
-    trainer = train_on_responses_only(
-        trainer,
-        instruction_part=instruction_part,
-        response_part=response_part,
-    )
-    return trainer
-
-
-def show_memory_stats():
-    gpu_stats = torch.cuda.get_device_properties(0)
-    start_gpu_memory = round(torch.cuda.max_memory_reserved() / 1024 / 1024 / 1024, 3)
-    max_memory = round(gpu_stats.total_memory / 1024 / 1024 / 1024, 3)
-    print(f"GPU = {gpu_stats.name}. Max memory = {max_memory} GB.")
-    print(f"{start_gpu_memory} GB of memory reserved.")
-    return start_gpu_memory, max_memory
-
-
-def train_model(trainer):
-    trainer_stats = trainer.train()
-    return trainer_stats
-
-
-def show_final_memory_stats(start_gpu_memory, max_memory, trainer_stats):
-    used_memory = round(torch.cuda.max_memory_reserved() / 1024 / 1024 / 1024, 3)
-    used_memory_for_lora = round(used_memory - start_gpu_memory, 3)
-    used_percentage = round(used_memory / max_memory * 100, 3)
-    lora_percentage = round(used_memory_for_lora / max_memory * 100, 3)
-    print(f"{trainer_stats.metrics['train_runtime']} seconds used for training.")
-    print(
-        f"{round(trainer_stats.metrics['train_runtime'] / 60, 2)} minutes used for training."
-    )
-    print(f"Peak reserved memory = {used_memory} GB.")
-    print(f"Peak reserved memory for training = {used_memory_for_lora} GB.")
-    print(f"Peak reserved memory % of max memory = {used_percentage} %.")
-    print(f"Peak reserved memory for training % of max memory = {lora_percentage} %.")
-
-
-def save_model_and_tokenizer(model, tokenizer, output_dir):
-    model.save_pretrained(output_dir)
-    tokenizer.save_pretrained(output_dir)
-
-
-def save_pretrained_gguf_func(model, tokenizer, output_dir, quantization_method):
-    model.save_pretrained_gguf(
-        output_dir, tokenizer, quantization_method=quantization_method
+    dataset_test.to_json(
+        "data/test.json", lines=False, orient="records", batch_size=1_000_000
     )
 
 
 if __name__ == "__main__":
-    # Load model and tokenizer
-    model, tokenizer = load_model_and_tokenizer(
-        model_name="unsloth/Llama-3.2-1B-Instruct",
-        max_seq_length=MAX_SEQ_LENGTH,
-        dtype=DTYPE,
-        load_in_4bit=LOAD_IN_4BIT,
-    )
-
-    # Apply LoRA adapters
-    model = apply_lora_adapters(model)
-
-    # Get chat template
-    tokenizer = get_chat_template_func(tokenizer)
-
-    # Load and map datasets
-    dataset_train, dataset_test = load_and_map_datasets()
-
-    # Initialize trainer
-    trainer = initialize_trainer(
-        model, tokenizer, dataset_train, MAX_SEQ_LENGTH, OUTPUT_DIR
-    )
-
-    # Train on completions only
-    trainer = train_on_completions_only_func(trainer)
-
-    # Show initial memory stats
-    start_gpu_memory, max_memory = show_memory_stats()
-
-    # Train model
-    trainer_stats = train_model(trainer)
-
-    # Show final memory stats
-    show_final_memory_stats(start_gpu_memory, max_memory, trainer_stats)
-
-    # Save model and tokenizer
-    save_model_and_tokenizer(model, tokenizer, LORA_OUTPUT_DIR)
-
-    # GGUF conversion
-    save_pretrained_gguf_func(
-        model, tokenizer, GGUF_OUTPUT_DIR, GGUF_QUANTIZATION_METHOD
-    )
+    main()

@@ -5,14 +5,25 @@ import (
 	"os"
 )
 
-const promptFilename = "data/prompt.txt"
+const (
+	generationPromptFile = "data/prompt.txt"
+	filteringPromptFile = "data/filtering.txt"
+)
 
-// GetPrompt reads the LLM prompt from the file and caches it.
-func GetPrompt() (string, error) {
-	data, err := os.ReadFile(promptFilename)
+// GetGenerationPrompt reads the generation LLM prompt from the file.
+func GetGenerationPrompt() (string, error) {
+	data, err := os.ReadFile(generationPromptFile)
 	if err != nil {
-		return "", fmt.Errorf("error reading prompt file: %w", err)
+		return "", fmt.Errorf("error reading generation prompt file: %w", err)
 	}
+	return string(data), nil
+}
 
+// GetFilteringPrompt reads the filtering LLM prompt from the file.
+func GetFilteringPrompt() (string, error) {
+	data, err := os.ReadFile(filteringPromptFile)
+	if err != nil {
+		return "", fmt.Errorf("error reading filtering prompt file: %w", err)
+	}
 	return string(data), nil
 }
