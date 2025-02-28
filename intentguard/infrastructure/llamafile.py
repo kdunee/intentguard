@@ -23,13 +23,13 @@ logger = logging.getLogger(__name__)
 # Constants
 STARTUP_TIMEOUT_SECONDS = 120  # 2 minutes
 INFERENCE_TIMEOUT_SECONDS = 300  # 5 minutes
-CONTEXT_SIZE = 8192
-MODEL_FILENAME = "IntentGuard-1.Q8_0.gguf"
+CONTEXT_SIZE = 32768
+MODEL_FILENAME = "IntentGuard-1-qwen2.5-coder-1.5b.gguf"
 MODEL_NAME = "IntentGuard-1"
 LLAMAFILE_URL = "https://github.com/Mozilla-Ocho/llamafile/releases/download/0.9.0/llamafile-0.9.0"  # URL for llamafile
 LLAMAFILE_SHA256 = "5a93cafd16abe61e79761575436339693806385a1f0b7d625024e9f91e71bcf1"  # SHA-256 checksum for llamafile
-GGUF_URL = "https://huggingface.co/kdunee/IntentGuard-1/resolve/main/IntentGuard-1.Q8_0.gguf"  # URL for the GGUF file
-GGUF_SHA256 = "0cb9476a129e7fc68b419ab86397b9ce4309b0d5faf6ba5d18629e796ca01383"  # SHA-256 checksum for the GGUF file
+GGUF_URL = "https://huggingface.co/kdunee/IntentGuard-1-qwen2.5-coder-1.5b-gguf/resolve/main/unsloth.Q4_K_M.gguf"  # URL for the GGUF file
+GGUF_SHA256 = "25a0ef913752216890c58fd49d588fa8cc5dde93f669258d29efd8b704cf16c4"  # SHA-256 checksum for the GGUF file
 MAX_RETRY_ATTEMPTS = 3  # Maximum number of retries for handling connection errors
 
 STORAGE_DIR = Path(".intentguard")
@@ -291,6 +291,8 @@ class Llamafile(InferenceProvider):
                     generated_text.replace('"""', '\\"\\"\\"')
                     .replace('\\\\"\\"\\"', '\\"\\"\\"')
                     .replace('\\\\"', '\\"')
+                    .replace('["', '[\\"')
+                    .replace('"]', '\\"]')
                 )
 
                 try:
