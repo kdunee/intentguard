@@ -24,7 +24,7 @@ class FsJudgementCache(JudgementCache):
     """
 
     def __init__(self):
-        self.cache_dir = Path(".intentguard")
+        self.cache_dir = Path(".intentguard") / "cache"
         logger.debug("Initialized cache directory at %s", self.cache_dir)
 
     def _get_cache_file_path(

@@ -16,6 +16,9 @@ var items = []string{
 	"Code Style",
 	"Business Logic",
 	"Miscellaneous",
+	"Function/Method Calls and Arguments",
+	"Variable Scope and Lifetime",
+	"Control Flow Understanding",
 }
 
 func GetRandomCategory() string {
