@@ -1,5 +1,5 @@
 /.ruff_cache
-/.venv
+/.venv*
 __pycache__
 .intentguard
 .mypy_cache
