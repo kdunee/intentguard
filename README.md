@@ -10,8 +10,10 @@
 ![PyPI - Version](https://img.shields.io/pypi/v/intentguard)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/intentguard)
 
-
 IntentGuard is a Python library for verifying code properties using natural language assertions. It integrates with testing frameworks like pytest and unittest, allowing you to express complex code expectations in plain English within your existing test suites.
+
+> [!IMPORTANT]
+> IntentGuard has been updated with a new model, `IntentGuard-1-qwen2.5-coder-1.5b`, which delivers improved performance with higher precision (92.3% vs 91.0%) while maintaining excellent overall accuracy. Upgrade to the latest version to benefit from these improvements!
 
 ## Why IntentGuard?
 
@@ -61,9 +63,9 @@ In these examples, manually writing tests to iterate through methods, parse AST,
 
 IntentGuard ensures reliable results through these mechanisms:
 
-1.  **Voting Mechanism:** Each assertion is evaluated multiple times (configurable via `num_evaluations`), and the majority result determines the outcome.
-2.  **Temperature Control:** Low temperature sampling in the LLM minimizes randomness.
-3.  **Structured Prompts:** Natural language assertions are converted into structured prompts for consistent LLM interpretation.
+1. **Voting Mechanism:** Each assertion is evaluated multiple times (configurable via `num_evaluations`), and the majority result determines the outcome.
+2. **Temperature Control:** Low temperature sampling in the LLM minimizes randomness.
+3. **Structured Prompts:** Natural language assertions are converted into structured prompts for consistent LLM interpretation.
 
 You can configure determinism settings:
 
@@ -77,14 +79,14 @@ options = IntentGuardOptions(
 
 IntentGuard is compatible with:
 
-  * **Python:** 3.10+
-  * **Operating Systems:**
-      * Linux 2.6.18+ (most distributions since \~2007)
-      * Darwin (macOS) 23.1.0+ (GPU support only on ARM64)
-      * Windows 10+ (AMD64 only)
-      * FreeBSD 13+
-      * NetBSD 9.2+ (AMD64 only)
-      * OpenBSD 7+ (AMD64 only)
+* **Python:** 3.10+
+* **Operating Systems:**
+  * Linux 2.6.18+ (most distributions since \~2007)
+  * Darwin (macOS) 23.1.0+ (GPU support only on ARM64)
+  * Windows 10+ (AMD64 only)
+  * FreeBSD 13+
+  * NetBSD 9.2+ (AMD64 only)
+  * OpenBSD 7+ (AMD64 only)
 
 These OS and architecture compatibilities are inherited from [llamafile](https://github.com/Mozilla-Ocho/llamafile), which IntentGuard uses to run the model locally.
 
@@ -149,30 +151,52 @@ guard = ig.IntentGuard(options)
 
 ## Model
 
-IntentGuard utilizes [a custom 1B parameter model](https://huggingface.co/kdunee/IntentGuard-1), fine-tuned from Llama-3.2-1B-Instruct. This model is optimized for code analysis and verification and runs locally using [llamafile](https://github.com/Mozilla-Ocho/llamafile) for privacy and efficient inference.
+IntentGuard utilizes [a custom 1.5B parameter model](https://huggingface.co/kdunee/IntentGuard-1-qwen2.5-coder-1.5b-gguf), fine-tuned from qwen2.5-coder-1.5b. This model is optimized for code analysis and verification and runs locally using [llamafile](https://github.com/Mozilla-Ocho/llamafile) for privacy and efficient inference.
+
+## Performance
+
+IntentGuard achieves strong performance on code property verification tasks through a rigorous validation framework.
+
+### Current Model Performance
+
+| Model                                                | Accuracy | Precision | Recall |
+|------------------------------------------------------|----------|-----------|--------|
+| **(current model)** IntentGuard-1-qwen2.5-coder-1.5b | 92.5%    | 92.3%     | 89.4%  |
+| (previous model)    IntentGuard-1-llama3.2-1b        | 92.4%    | 91.0%     | 91.0%  |
+| (reference model)   gpt-4o-mini                      | 89.3%    | 85.3%     | 90.2%  |
+
+### Validation Methodology
+
+Our validation framework employs a systematic approach:
+
+* Each test example undergoes 15 total evaluations (5 trials × 3 evaluations per trial)
+* A voting mechanism is applied within each group (jury size = 3)
+* A test passes only if ALL 5 trials succeed with majority agreement (≥2 out of 3)
+
+This strict validation ensures high confidence in the model's consistency and reliability. For more details, see our [validation documentation](validation/README.md).
 
 ## Local Development Environment Setup
 
 To contribute to IntentGuard, set up your local environment:
 
-1.  **Prerequisites:** Python 3.10+, [Poetry](https://python-poetry.org/docs/#installation).
-2.  **Clone:** `git clone <repository_url> && cd intentguard`
-3.  **Install dev dependencies:** `make install`
-4.  **Run tests & checks:** `make test`
+1. **Prerequisites:** Python 3.10+, [Poetry](https://python-poetry.org/docs/#installation).
+2. **Clone:** `git clone <repository_url> && cd intentguard`
+3. **Install dev dependencies:** `make install`
+4. **Run tests & checks:** `make test`
 
 Refer to the `Makefile` for more development commands.
 
-### Useful development commands:
+### Useful development commands
 
-  * `make install`: Installs development dependencies.
-  * `make install-prod`: Installs production dependencies only.
-  * `make check`: Runs linting checks (`ruff check`).
-  * `make format-check`: Checks code formatting (`ruff format --check`).
-  * `make mypy`: Runs static type checking (`mypy`).
-  * `make unittest`: Runs unit tests.
-  * `make test`: Runs all checks and tests.
-  * `make clean`: Removes the virtual environment.
-  * `make help`: Lists available `make` commands.
+* `make install`: Installs development dependencies.
+* `make install-prod`: Installs production dependencies only.
+* `make check`: Runs linting checks (`ruff check`).
+* `make format-check`: Checks code formatting (`ruff format --check`).
+* `make mypy`: Runs static type checking (`mypy`).
+* `make unittest`: Runs unit tests.
+* `make test`: Runs all checks and tests.
+* `make clean`: Removes the virtual environment.
+* `make help`: Lists available `make` commands.
 
 ## License
 
