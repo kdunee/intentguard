@@ -49,10 +49,13 @@ class TestLlamafileHttpRetry(unittest.TestCase):
         provider = Llamafile()
         provider._port = 12345
 
-        with patch(
-            "intentguard.infrastructure.llamafile.http.client.HTTPConnection",
-            _FakeHTTPConnection,
-        ), patch("intentguard.infrastructure.llamafile.time.sleep", return_value=None):
+        with (
+            patch(
+                "intentguard.infrastructure.llamafile.http.client.HTTPConnection",
+                _FakeHTTPConnection,
+            ),
+            patch("intentguard.infrastructure.llamafile.time.sleep", return_value=None),
+        ):
             response = provider._send_http_request({"messages": []})
 
         self.assertEqual(response["choices"][0]["message"]["content"], "ok")
