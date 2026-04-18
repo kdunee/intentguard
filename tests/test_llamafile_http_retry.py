@@ -1,5 +1,6 @@
 import json
 import unittest
+from typing import ClassVar
 from unittest.mock import patch
 
 from intentguard.infrastructure.llamafile import Llamafile
@@ -16,7 +17,7 @@ class _FakeResponse:
 
 
 class _FakeHTTPConnection:
-    responses = []
+    responses: ClassVar[list[_FakeResponse]] = []
 
     def __init__(self, *_args, **_kwargs):
         self._response = None
