@@ -266,9 +266,7 @@ class Llamafile(InferenceProvider):
                 time.sleep(1)
                 continue
 
-            error_msg = (
-                f"Llamafile API error: {response.status} {response.reason} {response_text}"
-            )
+            error_msg = f"Llamafile API error: {response.status} {response.reason} {response_text}"
             logger.error(error_msg)
             raise Exception(error_msg)
 
