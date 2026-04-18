@@ -26,8 +26,8 @@ INFERENCE_TIMEOUT_SECONDS = 300  # 5 minutes
 CONTEXT_SIZE = 32768
 MODEL_FILENAME = "IntentGuard-1-qwen2.5-coder-1.5b.gguf"
 MODEL_NAME = "IntentGuard-1"
-LLAMAFILE_URL = "https://github.com/Mozilla-Ocho/llamafile/releases/download/0.9.0/llamafile-0.9.0"  # URL for llamafile
-LLAMAFILE_SHA256 = "5a93cafd16abe61e79761575436339693806385a1f0b7d625024e9f91e71bcf1"  # SHA-256 checksum for llamafile
+LLAMAFILE_URL = "https://github.com/mozilla-ai/llamafile/releases/download/0.10.0/llamafile-0.10.0"  # URL for llamafile
+LLAMAFILE_SHA256 = "3d0e2757bfc04630d06d03bb5543291d2d9c100767fef059ce5fc3f755300fd0"  # SHA-256 checksum for llamafile
 GGUF_URL = "https://huggingface.co/kdunee/IntentGuard-1-qwen2.5-coder-1.5b-gguf/resolve/main/unsloth.Q4_K_M.gguf"  # URL for the GGUF file
 GGUF_SHA256 = "25a0ef913752216890c58fd49d588fa8cc5dde93f669258d29efd8b704cf16c4"  # SHA-256 checksum for the GGUF file
 MAX_RETRY_ATTEMPTS = 3  # Maximum number of retries for handling connection errors
@@ -174,7 +174,6 @@ class Llamafile(InferenceProvider):
                 "127.0.0.1",
                 "--port",
                 str(self._port),
-                "--nobrowser",
             ]
 
             system = platform.system()
@@ -226,33 +225,50 @@ class Llamafile(InferenceProvider):
         """
         Sends an HTTP request to the Llamafile server with the given payload
         and returns the parsed JSON response.
+
+        Llamafile 0.10.x may accept socket connections before the model has
+        finished loading, returning HTTP 503 "Loading model" responses. In that
+        case, we wait briefly and retry without restarting the process.
         """
-        conn = http.client.HTTPConnection(
-            "127.0.0.1", self._port, timeout=INFERENCE_TIMEOUT_SECONDS
-        )
-        try:
-            conn.request(
-                "POST",
-                "/v1/chat/completions",
-                body=json.dumps(payload),
-                headers={"Content-Type": "application/json"},
+        load_wait_start = time.time()
+
+        while True:
+            conn = http.client.HTTPConnection(
+                "127.0.0.1", self._port, timeout=INFERENCE_TIMEOUT_SECONDS
             )
-            response = conn.getresponse()
-            data = response.read()
-        finally:
-            conn.close()
+            try:
+                conn.request(
+                    "POST",
+                    "/v1/chat/completions",
+                    body=json.dumps(payload),
+                    headers={"Content-Type": "application/json"},
+                )
+                response = conn.getresponse()
+                data = response.read()
+            finally:
+                conn.close()
 
-        if response.status != 200:
-            error_msg = f"Llamafile API error: {response.status} {response.reason} {data.decode()}"
+            if response.status == 200:
+                json_response = json.loads(data)
+                if not json_response.get("choices"):
+                    error_msg = f"Llamafile API returned no choices: {json_response}"
+                    logger.error(error_msg)
+                    raise Exception(error_msg)
+                return json_response
+
+            response_text = data.decode(errors="replace")
+            if (
+                response.status == 503
+                and "Loading model" in response_text
+                and time.time() - load_wait_start < STARTUP_TIMEOUT_SECONDS
+            ):
+                logger.debug("Llamafile is still loading the model; retrying request")
+                time.sleep(1)
+                continue
+
+            error_msg = f"Llamafile API error: {response.status} {response.reason} {response_text}"
             logger.error(error_msg)
             raise Exception(error_msg)
-
-        json_response = json.loads(data)
-        if not json_response.get("choices"):
-            error_msg = f"Llamafile API returned no choices: {json_response}"
-            logger.error(error_msg)
-            raise Exception(error_msg)
-        return json_response
 
     def predict(
         self, prompt: List[Message], inference_options: InferenceOptions
