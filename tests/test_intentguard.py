@@ -1,9 +1,6 @@
-import logging
 import unittest
 
 from intentguard import IntentGuard, IntentGuardOptions
-
-logging.basicConfig(level=logging.INFO)
 
 
 class TestIntentGuard(unittest.TestCase):

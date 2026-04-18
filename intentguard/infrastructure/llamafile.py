@@ -51,7 +51,8 @@ def verify_checksum(file_path: Path, expected_sha256: str) -> bool:
 
 def download_file(url: str, target_path: Path, expected_sha256: str):
     """Download a file and verify its checksum."""
-    logger.info(f"Downloading {url} to {target_path}...")
+    download_started_at = time.perf_counter()
+    logger.info("Downloading %s to %s", url, target_path)
 
     # Create parent directories if they don't exist
     target_path.parent.mkdir(parents=True, exist_ok=True)
@@ -64,15 +65,22 @@ def download_file(url: str, target_path: Path, expected_sha256: str):
         target_path.unlink()  # Delete the file if checksum verification fails
         raise ValueError(f"Checksum verification failed for {target_path}")
 
-    logger.info(f"Successfully downloaded and verified {target_path}")
+    logger.info(
+        "Successfully downloaded and verified %s in %.2fs",
+        target_path,
+        time.perf_counter() - download_started_at,
+    )
 
 
 def ensure_file(url: str, target_path: Path, expected_sha256: str):
     """Ensure a file exists with the correct checksum."""
     if target_path.exists():
+        checksum_started_at = time.perf_counter()
         if verify_checksum(target_path, expected_sha256):
-            logger.debug(
-                f"{target_path} already exists with correct checksum, skipping download"
+            logger.info(
+                "%s already exists with correct checksum (verified in %.2fs), skipping download",
+                target_path,
+                time.perf_counter() - checksum_started_at,
             )
             return
         logger.debug(f"{target_path} exists but has incorrect checksum, re-downloading")
@@ -154,11 +162,17 @@ class Llamafile(InferenceProvider):
             if self._process is not None:
                 return
 
+            startup_started_at = time.perf_counter()
             model_path = STORAGE_DIR.joinpath(MODEL_FILENAME)
             llamafile_path = STORAGE_DIR.joinpath("llamafile.exe")
 
+            artifact_prepare_started_at = time.perf_counter()
             ensure_file(LLAMAFILE_URL, llamafile_path, LLAMAFILE_SHA256)
             ensure_file(GGUF_URL, model_path, GGUF_SHA256)
+            logger.info(
+                "Artifact preparation completed in %.2fs",
+                time.perf_counter() - artifact_prepare_started_at,
+            )
 
             # Get a free port and use it directly
             self._port = get_free_port()
@@ -205,8 +219,10 @@ class Llamafile(InferenceProvider):
                 try:
                     with socket.create_connection(("127.0.0.1", self._port), timeout=1):
                         logger.info(
-                            "Llamafile server started successfully on port %d",
+                            "Llamafile server started successfully on port %d in %.2fs (total init %.2fs)",
                             self._port,
+                            time.time() - start_time,
+                            time.perf_counter() - startup_started_at,
                         )
                         return
                 except (socket.timeout, ConnectionRefusedError):
@@ -231,6 +247,7 @@ class Llamafile(InferenceProvider):
         case, we wait briefly and retry without restarting the process.
         """
         load_wait_start = time.time()
+        loading_retry_count = 0
 
         while True:
             conn = http.client.HTTPConnection(
@@ -249,6 +266,12 @@ class Llamafile(InferenceProvider):
                 conn.close()
 
             if response.status == 200:
+                if loading_retry_count > 0:
+                    logger.info(
+                        "Llamafile model loading wait finished after %.2fs (%d retries)",
+                        time.time() - load_wait_start,
+                        loading_retry_count,
+                    )
                 json_response = json.loads(data)
                 if not json_response.get("choices"):
                     error_msg = f"Llamafile API returned no choices: {json_response}"
@@ -262,6 +285,7 @@ class Llamafile(InferenceProvider):
                 and "Loading model" in response_text
                 and time.time() - load_wait_start < STARTUP_TIMEOUT_SECONDS
             ):
+                loading_retry_count += 1
                 logger.debug("Llamafile is still loading the model; retrying request")
                 time.sleep(1)
                 continue
