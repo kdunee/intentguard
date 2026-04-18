@@ -88,7 +88,7 @@ IntentGuard is compatible with:
   * NetBSD 9.2+ (AMD64 only)
   * OpenBSD 7+ (AMD64 only)
 
-These OS and architecture compatibilities are inherited from [llamafile](https://github.com/Mozilla-Ocho/llamafile), which IntentGuard uses to run the model locally.
+These OS and architecture compatibilities are inherited from [llamafile](https://github.com/mozilla-ai/llamafile), which IntentGuard uses to run the model locally.
 
 ## Installation
 
@@ -151,7 +151,7 @@ guard = ig.IntentGuard(options)
 
 ## Model
 
-IntentGuard utilizes [a custom 1.5B parameter model](https://huggingface.co/kdunee/IntentGuard-1-qwen2.5-coder-1.5b-gguf), fine-tuned from qwen2.5-coder-1.5b. This model is optimized for code analysis and verification and runs locally using [llamafile](https://github.com/Mozilla-Ocho/llamafile) for privacy and efficient inference.
+IntentGuard utilizes [a custom 1.5B parameter model](https://huggingface.co/kdunee/IntentGuard-1-qwen2.5-coder-1.5b-gguf), fine-tuned from qwen2.5-coder-1.5b. This model is optimized for code analysis and verification and runs locally using [llamafile](https://github.com/mozilla-ai/llamafile) for privacy and efficient inference.
 
 ## Performance
 
