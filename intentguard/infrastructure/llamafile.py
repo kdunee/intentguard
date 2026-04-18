@@ -174,7 +174,6 @@ class Llamafile(InferenceProvider):
                 "127.0.0.1",
                 "--port",
                 str(self._port),
-                "--nobrowser",
             ]
 
             system = platform.system()
@@ -226,33 +225,52 @@ class Llamafile(InferenceProvider):
         """
         Sends an HTTP request to the Llamafile server with the given payload
         and returns the parsed JSON response.
+
+        Llamafile 0.10.x may accept socket connections before the model has
+        finished loading, returning HTTP 503 "Loading model" responses. In that
+        case, we wait briefly and retry without restarting the process.
         """
-        conn = http.client.HTTPConnection(
-            "127.0.0.1", self._port, timeout=INFERENCE_TIMEOUT_SECONDS
-        )
-        try:
-            conn.request(
-                "POST",
-                "/v1/chat/completions",
-                body=json.dumps(payload),
-                headers={"Content-Type": "application/json"},
+        load_wait_start = time.time()
+
+        while True:
+            conn = http.client.HTTPConnection(
+                "127.0.0.1", self._port, timeout=INFERENCE_TIMEOUT_SECONDS
             )
-            response = conn.getresponse()
-            data = response.read()
-        finally:
-            conn.close()
+            try:
+                conn.request(
+                    "POST",
+                    "/v1/chat/completions",
+                    body=json.dumps(payload),
+                    headers={"Content-Type": "application/json"},
+                )
+                response = conn.getresponse()
+                data = response.read()
+            finally:
+                conn.close()
 
-        if response.status != 200:
-            error_msg = f"Llamafile API error: {response.status} {response.reason} {data.decode()}"
+            if response.status == 200:
+                json_response = json.loads(data)
+                if not json_response.get("choices"):
+                    error_msg = f"Llamafile API returned no choices: {json_response}"
+                    logger.error(error_msg)
+                    raise Exception(error_msg)
+                return json_response
+
+            response_text = data.decode(errors="replace")
+            if (
+                response.status == 503
+                and "Loading model" in response_text
+                and time.time() - load_wait_start < STARTUP_TIMEOUT_SECONDS
+            ):
+                logger.debug("Llamafile is still loading the model; retrying request")
+                time.sleep(1)
+                continue
+
+            error_msg = (
+                f"Llamafile API error: {response.status} {response.reason} {response_text}"
+            )
             logger.error(error_msg)
             raise Exception(error_msg)
-
-        json_response = json.loads(data)
-        if not json_response.get("choices"):
-            error_msg = f"Llamafile API returned no choices: {json_response}"
-            logger.error(error_msg)
-            raise Exception(error_msg)
-        return json_response
 
     def predict(
         self, prompt: List[Message], inference_options: InferenceOptions
