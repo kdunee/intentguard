@@ -1,6 +1,10 @@
 import unittest
 
 from intentguard import IntentGuard, IntentGuardOptions
+from tests.logging_config import configure_test_logging
+
+
+configure_test_logging()
 
 
 class TestIntentGuard(unittest.TestCase):

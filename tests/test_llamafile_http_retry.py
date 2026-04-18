@@ -4,6 +4,10 @@ from typing import ClassVar
 from unittest.mock import patch
 
 from intentguard.infrastructure.llamafile import Llamafile
+from tests.logging_config import configure_test_logging
+
+
+configure_test_logging()
 
 
 class _FakeResponse:
