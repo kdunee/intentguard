@@ -33,6 +33,8 @@ jobs:
             ${{ runner.os }}-poetry-
       - name: Run Make test
         run: make test
+        env:
+          INTENTGUARD_TEST_LOG_LEVEL: DEBUG
 
   publish:
     needs: [test]

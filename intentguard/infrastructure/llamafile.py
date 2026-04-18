@@ -77,7 +77,7 @@ def ensure_file(url: str, target_path: Path, expected_sha256: str):
     if target_path.exists():
         checksum_started_at = time.perf_counter()
         if verify_checksum(target_path, expected_sha256):
-            logger.info(
+            logger.debug(
                 "%s already exists with correct checksum (verified in %.2fs), skipping download",
                 target_path,
                 time.perf_counter() - checksum_started_at,
@@ -169,7 +169,7 @@ class Llamafile(InferenceProvider):
             artifact_prepare_started_at = time.perf_counter()
             ensure_file(LLAMAFILE_URL, llamafile_path, LLAMAFILE_SHA256)
             ensure_file(GGUF_URL, model_path, GGUF_SHA256)
-            logger.info(
+            logger.debug(
                 "Artifact preparation completed in %.2fs",
                 time.perf_counter() - artifact_prepare_started_at,
             )
@@ -267,7 +267,7 @@ class Llamafile(InferenceProvider):
 
             if response.status == 200:
                 if loading_retry_count > 0:
-                    logger.info(
+                    logger.debug(
                         "Llamafile model loading wait finished after %.2fs (%d retries)",
                         time.time() - load_wait_start,
                         loading_retry_count,
