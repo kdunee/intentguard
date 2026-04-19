@@ -174,6 +174,8 @@ class Llamafile(InferenceProvider):
                 "127.0.0.1",
                 "--port",
                 str(self._port),
+                "-np",
+                "1",
             ]
 
             system = platform.system()
