@@ -181,7 +181,7 @@ To contribute to IntentGuard, set up your local environment:
 
 1. **Prerequisites:** Python 3.10+, [uv](https://docs.astral.sh/uv/).
 2. **Clone:** `git clone <repository_url> && cd intentguard`
-3. **Install dev dependencies:** `make install` or `uv sync --dev`
+3. **Install dev dependencies:** `make install` or `uv sync --dev --group validation --group dataset`
 4. **Run tests & checks:** `make test`
 
 Refer to the `Makefile` for more development commands.

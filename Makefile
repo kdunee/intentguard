@@ -3,7 +3,7 @@ PYTHON_VERSION ?= 3.10
 .PHONY: install install-prod check format-check mypy unittest test publish all clean help
 
 install: ## Install development dependencies
-	uv sync --dev --locked
+	uv sync --dev --group validation --group dataset --locked
 
 install-prod: ## Install production dependencies
 	uv sync --no-dev --locked
