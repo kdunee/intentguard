@@ -179,9 +179,9 @@ This strict validation ensures high confidence in the model's consistency and re
 
 To contribute to IntentGuard, set up your local environment:
 
-1. **Prerequisites:** Python 3.10+, [Poetry](https://python-poetry.org/docs/#installation).
+1. **Prerequisites:** Python 3.10+, [uv](https://docs.astral.sh/uv/).
 2. **Clone:** `git clone <repository_url> && cd intentguard`
-3. **Install dev dependencies:** `make install`
+3. **Install dev dependencies:** `make install` or `uv sync --dev`
 4. **Run tests & checks:** `make test`
 
 Refer to the `Makefile` for more development commands.
