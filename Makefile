@@ -3,28 +3,29 @@ PYTHON_VERSION ?= 3.10
 .PHONY: install install-prod check format-check mypy unittest test publish all clean help
 
 install: ## Install development dependencies
-	poetry install --with dev
+	uv sync --dev --locked
 
 install-prod: ## Install production dependencies
-	poetry install
+	uv sync --no-dev --locked
 
 check: ## Run ruff check
-	poetry run ruff check .
+	uv run ruff check .
 
 format-check: ## Run ruff format check
-	poetry run ruff format --check .
+	uv run ruff format --check .
 
 mypy: ## Run mypy check
-	poetry run mypy .
+	uv run mypy .
 
 unittest: ## Run unit tests
-	poetry run python -m unittest discover tests
+	uv run python -m unittest discover tests
 
 test: install check format-check mypy unittest ## Run all checks and tests
 
-publish: install-prod ## Publish to PyPI (requires PYPI_API_TOKEN environment variable to be set)
-	poetry config pypi-token.pypi $(PYPI_API_TOKEN)
-	poetry publish --build
+publish: install-prod ## Publish to PyPI (requires UV_PUBLISH_TOKEN environment variable to be set)
+	rm -rf dist
+	uv build --no-sources
+	uv publish
 
 clean: ## Remove virtual environment
 	rm -rf .venv

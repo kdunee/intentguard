@@ -1,24 +1,31 @@
-[tool.poetry]
+[project]
 name = "intentguard"
-version = "2.1.2-dev"
+version = "2.1.2.dev0"
 description = "A Python library for verifying code properties using natural language assertions."
-authors = ["Kosma Dunikowski <kosmadunikowski@gmail.com>"]
-license = "MIT"
 readme = "README.md"
-homepage = "https://github.com/kdunee/intentguard"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Kosma Dunikowski", email = "kosmadunikowski@gmail.com" }]
 keywords = ["testing", "pytest", "unittest", "ai-testing", "llm", "code-verification", "natural-language", "test-automation", "code-quality", "language-models"]
 classifiers = [
     "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
     "Topic :: Software Development :: Quality Assurance",
     "Topic :: Software Development :: Testing",
 ]
+dependencies = []
 
-[tool.poetry.dependencies]
-python = "^3.10"
+[project.urls]
+Homepage = "https://github.com/kdunee/intentguard"
+Repository = "https://github.com/kdunee/intentguard"
 
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.15.11"
-mypy = "^1.20.1"
+[dependency-groups]
+dev = [
+    "ruff>=0.15.11,<0.16",
+    "mypy>=1.20.1,<2",
+]
 
 
 [tool.ruff]
@@ -28,6 +35,9 @@ target-version = "py310"
 files = "intentguard/**/*.py"
 ignore_missing_imports = true
 
+[tool.hatch.build.targets.wheel]
+packages = ["intentguard"]
+
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"

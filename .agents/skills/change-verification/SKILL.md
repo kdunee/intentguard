@@ -49,10 +49,10 @@ High-risk changes:
 Useful commands when scope fits:
 
 ```bash
-poetry run ruff check <changed-paths>
-poetry run ruff format --check <changed-paths>
-poetry run mypy intentguard
-poetry run python -m unittest discover tests
+uv run ruff check <changed-paths>
+uv run ruff format --check <changed-paths>
+uv run mypy intentguard
+uv run python -m unittest discover tests
 make test
 ```
 
