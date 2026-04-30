@@ -1,6 +1,6 @@
 [project]
 name = "intentguard"
-version = "2.2.0"
+version = "2.2.1.dev0"
 description = "A Python library for verifying code properties using natural language assertions."
 readme = "README.md"
 requires-python = ">=3.10"
