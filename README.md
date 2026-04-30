@@ -10,85 +10,14 @@
 ![PyPI - Version](https://img.shields.io/pypi/v/intentguard)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/intentguard)
 
-IntentGuard is a Python library for verifying code properties using natural language assertions. It integrates with testing frameworks like pytest and unittest, allowing you to express complex code expectations in plain English within your existing test suites.
+IntentGuard lets you test code intent with natural language assertions.
+
+Use it when a property is real and test-worthy, but awkward to encode with ordinary assertions: architecture rules, security practices, documentation contracts, error-handling conventions, or other cross-cutting code qualities. IntentGuard checks referenced code with a local model and raises `AssertionError` when the judgement fails.
+
+IntentGuard complements traditional tests. Keep unit tests for exact outputs, edge cases, state changes, and safety-critical behavior. Use IntentGuard where a custom AST walk, linter rule, or review checklist would be noisy or expensive.
 
 > [!IMPORTANT]
-> IntentGuard has been updated with a new model, `IntentGuard-1-qwen2.5-coder-1.5b`, which delivers improved performance with higher precision (92.3% vs 91.0%) while maintaining excellent overall accuracy. Upgrade to the latest version to benefit from these improvements!
-
-## Why IntentGuard?
-
-Traditional code testing often requires writing extensive code to verify intricate properties. IntentGuard simplifies this by enabling you to express sophisticated test cases in natural language. This is particularly useful when writing conventional test code becomes impractical or overly complex.
-
-**Key Use Cases:**
-
-* **Complex Property Verification:** Test intricate code behaviors that are hard to assert with standard methods.
-* **Reduced Boilerplate:**  Avoid writing lengthy test code for advanced checks.
-* **Improved Readability:** Natural language assertions make tests easier to understand, especially for complex logic.
-
-### Key Features
-
-1. **Natural Language Assertions:** Write test assertions in plain English.
-2. **Testing Framework Integration:** Works seamlessly with pytest and unittest.
-3. **Deterministic Results:** Employs a voting mechanism and controlled sampling for consistent test outcomes.
-4. **Flexible Verification:** Test properties difficult to verify using traditional techniques.
-5. **Detailed Failure Explanations:** Provides clear, natural language explanations when assertions fail.
-6. **Efficient Result Caching:** Caches results to speed up test execution and avoid redundant evaluations.
-
-## When to Use IntentGuard
-
-IntentGuard is ideal when implementing traditional tests for certain code properties is challenging or requires excessive code. Consider these scenarios:
-
-```python
-# Example 1: Error Handling Verification
-
-def test_error_handling():
-    ig.assert_code(
-        "All methods in {module} should use the custom ErrorHandler class for exception management, and log errors before re-raising them",
-        {"module": my_critical_module}
-    )
-
-
-# Example 2: Documentation Consistency Check
-
-def test_docstring_completeness():
-    ig.assert_code(
-        "All public methods in {module} should have docstrings that include Parameters, Returns, and Examples sections",
-        {"module": my_api_module}
-    )
-````
-
-In these examples, manually writing tests to iterate through methods, parse AST, and check for specific patterns would be significantly more complex than using IntentGuard's natural language assertions.
-
-## How It Works: Deterministic Testing
-
-IntentGuard ensures reliable results through these mechanisms:
-
-1. **Voting Mechanism:** Each assertion is evaluated multiple times (configurable via `num_evaluations`), and the majority result determines the outcome.
-2. **Temperature Control:** Low temperature sampling in the LLM minimizes randomness.
-3. **Structured Prompts:** Natural language assertions are converted into structured prompts for consistent LLM interpretation.
-
-You can configure determinism settings:
-
-```python
-options = IntentGuardOptions(
-    num_evaluations=5,      # Number of evaluations per assertion
-)
-```
-
-## Compatibility
-
-IntentGuard is compatible with:
-
-* **Python:** 3.10+
-* **Operating Systems:**
-  * Linux 2.6.18+ (most distributions since \~2007)
-  * Darwin (macOS) 23.1.0+ (GPU support only on ARM64)
-  * Windows 10+ (AMD64 only)
-  * FreeBSD 13+
-  * NetBSD 9.2+ (AMD64 only)
-  * OpenBSD 7+ (AMD64 only)
-
-These OS and architecture compatibilities are inherited from [llamafile](https://github.com/mozilla-ai/llamafile), which IntentGuard uses to run the model locally.
+> The current default model is `IntentGuard-1-qwen2.5-coder-1.5b`, with 92.5% accuracy and 92.3% precision in the validation suite.
 
 ## Installation
 
@@ -96,7 +25,7 @@ These OS and architecture compatibilities are inherited from [llamafile](https:/
 pip install intentguard
 ```
 
-## Basic Usage
+## Quick Start
 
 ### With pytest
 
@@ -106,13 +35,11 @@ import intentguard as ig
 def test_code_properties():
     guard = ig.IntentGuard()
 
-    # Test code organization
     guard.assert_code(
         "Classes in {module} should follow the Single Responsibility Principle",
         {"module": my_module}
     )
 
-    # Test security practices
     guard.assert_code(
         "All database queries in {module} should be parameterized to prevent SQL injection",
         {"module": db_module}
@@ -136,14 +63,37 @@ class TestCodeQuality(unittest.TestCase):
         )
 ```
 
-## Advanced Usage: Custom Evaluation Options
+## Good Fits
+
+IntentGuard works best for high-level properties that are easy to describe and hard to check directly:
+
+* "All public methods in {module} should have docstrings with Parameters and Returns sections."
+* "All API endpoints in {module} should validate input before using it."
+* "All methods in {module} should log errors before re-raising them."
+
+Avoid using it for exact numeric results, runtime behavior that must be executed, or anything that needs perfect determinism. Model judgement is useful signal, not proof.
+
+## How It Works
+
+1. `assert_code()` receives a natural language assertion and code references.
+2. Code references are converted into source snippets.
+3. IntentGuard builds a structured prompt and checks the cache.
+4. On cache miss, the local model evaluates the assertion `num_evaluations` times.
+5. A strict majority decides the result. Ties fail.
+6. The result is cached for repeat runs.
+
+## Near-Deterministic Results
+
+IntentGuard is designed for repeatable judgements, not guaranteed determinism. It uses low-temperature sampling, repeated evaluation, strict majority voting, and caching to make results stable in normal test runs. Fresh model evaluations can still vary, especially after changing the assertion, code, model, temperature, or evaluation count.
+
+Configure repeatability:
 
 ```python
 import intentguard as ig
 
 options = ig.IntentGuardOptions(
-    num_evaluations=7,          # Increase number of evaluations
-    temperature=0.1,            # Lower temperature for more deterministic results
+    num_evaluations=7,  # More evaluations make majority vote more stable
+    temperature=0.1,    # Lower temperature reduces sampling variance
 )
 
 guard = ig.IntentGuard(options)
@@ -151,13 +101,9 @@ guard = ig.IntentGuard(options)
 
 ## Model
 
-IntentGuard utilizes [a custom 1.5B parameter model](https://huggingface.co/kdunee/IntentGuard-1-qwen2.5-coder-1.5b-gguf), fine-tuned from qwen2.5-coder-1.5b. This model is optimized for code analysis and verification and runs locally using [llamafile](https://github.com/mozilla-ai/llamafile) for privacy and efficient inference.
+IntentGuard uses [a custom 1.5B parameter model](https://huggingface.co/kdunee/IntentGuard-1-qwen2.5-coder-1.5b-gguf), fine-tuned from Qwen2.5-Coder-1.5B for code property verification. It runs locally through [llamafile](https://github.com/mozilla-ai/llamafile), so code is not sent to a hosted API by default.
 
 ## Performance
-
-IntentGuard achieves strong performance on code property verification tasks through a rigorous validation framework.
-
-### Current Model Performance
 
 | Model                                                | Accuracy | Precision | Recall |
 |------------------------------------------------------|----------|-----------|--------|
@@ -167,26 +113,33 @@ IntentGuard achieves strong performance on code property verification tasks thro
 
 ### Validation Methodology
 
-Our validation framework employs a systematic approach:
+The validation suite is intentionally strict:
 
-* Each test example undergoes 15 total evaluations (5 trials × 3 evaluations per trial)
+* Each test example gets 15 total evaluations (5 trials x 3 evaluations per trial)
 * A voting mechanism is applied within each group (jury size = 3)
-* A test passes only if ALL 5 trials succeed with majority agreement (≥2 out of 3)
+* A test passes only if all 5 trials succeed with majority agreement (2 out of 3 or better)
 
-This strict validation ensures high confidence in the model's consistency and reliability. For more details, see our [validation documentation](validation/README.md).
+For more details, see the [validation documentation](validation/README.md).
+
+## Compatibility
+
+IntentGuard requires Python 3.10+. OS and architecture support come from [llamafile](https://github.com/mozilla-ai/llamafile):
+
+* Linux 2.6.18+
+* macOS 23.1.0+ (GPU support on ARM64)
+* Windows 10+ (AMD64)
+* FreeBSD 13+
+* NetBSD 9.2+ (AMD64)
+* OpenBSD 7+ (AMD64)
 
 ## Local Development Environment Setup
-
-To contribute to IntentGuard, set up your local environment:
 
 1. **Prerequisites:** Python 3.10+, [uv](https://docs.astral.sh/uv/).
 2. **Clone:** `git clone <repository_url> && cd intentguard`
 3. **Install dev dependencies:** `make install` or `uv sync --dev --group validation --group dataset`
 4. **Run tests & checks:** `make test`
 
-Refer to the `Makefile` for more development commands.
-
-### Useful development commands
+Useful commands:
 
 * `make install`: Installs development dependencies.
 * `make install-prod`: Installs production dependencies only.
@@ -201,7 +154,3 @@ Refer to the `Makefile` for more development commands.
 ## License
 
 [MIT License](LICENSE)
-
------
-
-IntentGuard is a complementary tool for specific testing needs, not a replacement for traditional testing. It is most effective for verifying complex code properties that are difficult to test conventionally.
