@@ -4,7 +4,7 @@ IntentGuard is a **library for natural-language code assertions**. Keep changes 
 
 ## What matters most
 
-- Public API surface is intentionally tiny: `IntentGuard` + `IntentGuardOptions`. Preserve this unless a task explicitly expands API.
+- Public API surface is intentionally tiny: `IntentGuard`, `IntentGuardOptions`, `assert_code`, `test_code`, and `set_default_options`. Preserve this unless a task explicitly expands API.
 - The runtime uses three replaceable collaborators:
   - `InferenceProvider` (model backend)
   - `PromptFactory` (prompt construction)
