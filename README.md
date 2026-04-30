@@ -33,14 +33,12 @@ pip install intentguard
 import intentguard as ig
 
 def test_code_properties():
-    guard = ig.IntentGuard()
-
-    guard.assert_code(
+    ig.assert_code(
         "Classes in {module} should follow the Single Responsibility Principle",
         {"module": my_module}
     )
 
-    guard.assert_code(
+    ig.assert_code(
         "All database queries in {module} should be parameterized to prevent SQL injection",
         {"module": db_module}
     )
@@ -53,11 +51,8 @@ import unittest
 import intentguard as ig
 
 class TestCodeQuality(unittest.TestCase):
-    def setUp(self):
-        self.guard = ig.IntentGuard()
-
     def test_error_handling(self):
-        self.guard.assert_code(
+        ig.assert_code(
             "All API endpoints in {module} should have proper input validation",
             {"module": api_module}
         )
@@ -91,13 +86,17 @@ Configure repeatability:
 ```python
 import intentguard as ig
 
-options = ig.IntentGuardOptions(
-    num_evaluations=7,  # More evaluations make majority vote more stable
-    temperature=0.1,    # Lower temperature reduces sampling variance
+ig.set_default_options(
+    ig.IntentGuardOptions(
+        num_evaluations=7,  # More evaluations make majority vote more stable
+        temperature=0.1,    # Lower temperature reduces sampling variance
+    )
 )
-
-guard = ig.IntentGuard(options)
 ```
+
+Use module-level `ig.assert_code(...)` for ordinary tests. Use
+`ig.IntentGuard(options)` when one test class, suite, or subsystem needs isolated
+options.
 
 ## Model
 

@@ -26,6 +26,18 @@ class IntentGuard:
     _inference_provider: InferenceProvider
     _prompt_factory: PromptFactory
     _judgement_cache_provider: JudgementCache
+    _default_options = IntentGuardOptions()
+
+    @classmethod
+    def set_default_options(cls, options: IntentGuardOptions) -> None:
+        """
+        Set process-wide default options for IntentGuard instances.
+
+        Args:
+            options: Configuration options used when no explicit options are provided.
+        """
+        logger.info("Setting default options: %s", options)
+        cls._default_options = options
 
     @classmethod
     def set_inference_provider(cls, inference_provider: InferenceProvider) -> None:
@@ -74,7 +86,7 @@ class IntentGuard:
         Args:
             options: Configuration options for assertions. Uses default options if None.
         """
-        self.options: IntentGuardOptions = options or IntentGuardOptions()
+        self.options: IntentGuardOptions = options or IntentGuard._default_options
         logger.debug("Initialized IntentGuard with options: %s", self.options)
 
     def test_code(

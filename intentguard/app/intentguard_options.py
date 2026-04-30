@@ -23,3 +23,10 @@ class IntentGuardOptions:
         """
         self.num_evaluations: int = num_evaluations
         self.temperature: float = temperature
+
+    def __repr__(self) -> str:
+        return (
+            f"{self.__class__.__name__}("
+            f"num_evaluations={self.num_evaluations!r}, "
+            f"temperature={self.temperature!r})"
+        )
